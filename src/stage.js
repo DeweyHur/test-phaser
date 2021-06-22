@@ -1,38 +1,23 @@
 import React from 'react';
-import Phaser from 'phaser';
+import { Preload, Create } from './game';
 import Character from './character';
-
-function preload() {
-    this.load.image('base_tiles', 'assets/buch-outdoor.png');
-    this.load.tilemapTiledJSON('tilemap', 'assets/outside.json');
-}
-
-function create() {
-    const map = this.make.tilemap({ key: 'tilemap' });
-    const tileset = map.addTilesetImage('outdoor', 'base_tiles');
-    map.createLayer('Ground', tileset);
-    map.createLayer('Fringe', tileset);
-
-    new Character(this, 'dwarf', { x: 400, y: 400, state: 'Move' });
-}
 
 const Stage = () => {
     const ref = React.useRef(null);
-    const [game, setGame] = React.useState(0);
 
     React.useEffect(() => {
-        const config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            physics: {
-                default: 'arcade',
-                arcade: { gravity: { y: 200 } }
-            },
-            scene: { preload, create }
-        }
+        Preload.on((scene) => {
+            scene.load.image('base_tiles', 'assets/buch-outdoor.png');
+            scene.load.tilemapTiledJSON('tilemap', 'assets/outside.json');        
+        });
+        Create.on((scene) => {
+            const map = scene.make.tilemap({ key: 'tilemap' });
+            const tileset = map.addTilesetImage('outdoor', 'base_tiles');
+            map.createLayer('Ground', tileset);
+            map.createLayer('Fringe', tileset);
 
-        setGame(new Phaser.Game(config));
+            new Character(scene, 'dwarf', { x: 400, y: 400, state: 'Move' });
+        });
     }, []);
 
     return (
