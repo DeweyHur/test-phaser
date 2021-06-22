@@ -1,47 +1,38 @@
-import React from 'react';
-import Phaser from 'phaser';
+import EventEmitter from 'events';
+import Phaser from 'phaser.js';
 
-function preload() {
-    this.load.multiatlas('dwarf', 'assets/dwarf.json', 'assets');
-    this.load.image('base_tiles', 'assets/buch-outdoor.png');
-    this.load.tilemapTiledJSON('tilemap', 'assets/outside.json');
+const emitter = new EventEmitter();
+const events = ['preload', 'create', 'update'];
+const symbols = events.reduce((obj, event) => {
+  obj[event] = Symbol(event);
+  return obj;
+} ,{});
+
+ 
+
+export const Preload = {
+  on: func => emitter.on(symbols.preload, func)
+}
+export const Create = {
+  on: func => emitter.on(symbols.create, func)
+}
+export const Update = {
+  on: func => emitter.on(symbols.update, func)
 }
 
-function create() {
-    const map = this.make.tilemap({ key: 'tilemap' });
-    const tileset = map.addTilesetImage('outdoor', 'base_tiles');
-    map.createLayer('Ground', tileset);
-    map.createLayer('Fringe', tileset);
-
-    const dwarf = this.add.sprite(400, 400, 'dwarf', 'Move/1.png');
-    const frameNames = this.anims.generateFrameNames('dwarf', { start: 1, end: 2, prefix: 'Move/', suffix: '.png' });
-    this.anims.create({ key: 'move', frames: frameNames, frameRate: 10, repeat: -1 });
-    dwarf.anims.play('move');
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  physics: {
+      default: 'arcade',
+      arcade: { gravity: { y: 200 } }
+  },
+  scene: events.reduce((obj, event) => {
+    obj[event] = () => Event.emit(symbols[event]);
+    return obj;
+  }, {})
 }
 
-const Game = () => {
-    const ref = React.useRef(null);
-    const [game, setGame] = React.useState(0);
+export const Game = new Phaser.Game(config);
 
-    React.useEffect(() => {
-        const config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            physics: {
-                default: 'arcade',
-                arcade: { gravity: { y: 200 } }
-            },
-            scene: { preload, create }
-        }
-
-        setGame(new Phaser.Game(config));
-    }, []);
-
-    return (
-        <div ref={ref}>
-        </div>
-    );
-};
-
-export default Game;

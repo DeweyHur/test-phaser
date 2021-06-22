@@ -1,3 +1,17 @@
+# Tasks
+
+1. Add character classes
+1. Attach keyboard input to the character class
+1. Attach chasing AI to the character class
+1. Divide with the zones
+1. Chasing over the zones
+1. Add music
+1. Map scrolling
+1. Add stats
+1. Basic Damage equation
+1. Projectile (Arrow)
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

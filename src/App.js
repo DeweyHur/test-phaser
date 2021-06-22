@@ -1,9 +1,9 @@
-import Game from './game';
+import Stage from './stage';
 import './App.css';
 
 function App() {
   return (
-    <Game />
+    <Stage />
   );
 }
 
