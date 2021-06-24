@@ -16,7 +16,11 @@ const Stage = () => {
             map.createLayer('Ground', tileset);
             map.createLayer('Fringe', tileset);
 
-            new Character(scene, 'dwarf', { x: 400, y: 400, state: 'Move' });
+            new Character(scene, 0, '0', { x: 300, y: 400 });
+            new Character(scene, 1, '1', { x: 350, y: 400 });
+            new Character(scene, 2, '2', { x: 400, y: 400 });
+            new Character(scene, 3, '3', { x: 450, y: 400 });
+            new Character(scene, 4, '4', { x: 500, y: 400 });
         });
     }, []);
 

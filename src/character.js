@@ -1,33 +1,40 @@
 import { Preload, Create } from './game';
+import parse from 'csv-parse';
 
-const frameGroups = {
-  'Move': { end: 2, frameRate: 10, repeat: -1 },
-  'Attack': { end: 4, frameRate: 10, repeat: -1 },
+const frameGroups = [
+  'up', 'left', 'right', 'down', 'hit', 'dead'
+];
+const characters = {
 };
 
-const characters = [
-  'dwarf'
-];
+Preload.on(async (scene) => {
+  scene.load.multiatlas('characters', 'assets/characters.json', 'assets');
 
-Preload.on((scene) => {
-  characters.forEach(name => {
-    scene.load.multiatlas(name, `assets/${name}.json`, 'assets');
-  })
+  const res = await fetch('/assets/characters.csv');
+  const body = await res.text();
+  parse(body, { columns: true }, (err, records) => {
+    if (err) throw err;
+    records.forEach(record => {
+      characters[record.no] = record;
+    });
+  });
 });
 
 Create.on((scene) => {
-  characters.forEach(name => {
-    Object.entries(frameGroups).forEach(([state, { end, frameRate, repeat }]) => {
-      const frames = scene.anims.generateFrameNames(name, { start: 1, end, prefix: `${state}/`, suffix: '.png' });
-      scene.anims.create({ key: `${name}_${state}`, frames, frameRate, repeat });
+  Object.keys(characters).forEach(no => {
+    frameGroups.forEach(action => {
+      const frameName = `${no}_${action}`;
+      const frames = scene.anims.generateFrameNames('characters', { start: 0, end: 1, prefix: `out/${no}/${action}_` });
+      scene.anims.create({ key: frameName, frames, frameRate: 20, repeat: -1 });
     });
   });
 });
 
 class Character {
-  constructor(scene, name, { state, x, y }) {
+  constructor(scene, no, name, { action, x, y }) {
     this.sprite = scene.add.sprite(x, y, name);
-    this.sprite.anims.play(`${name}_${state}`);
+    action = action || 'down';
+    this.sprite.anims.play(`${no}_${action}`);
   }
 };
 
