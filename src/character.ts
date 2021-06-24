@@ -1,27 +1,29 @@
 import { Preload, Create } from './game';
 import parse from 'csv-parse';
+import { Scene } from 'phaser';
 
 const frameGroups = [
   'up', 'left', 'right', 'down', 'hit', 'dead'
 ];
-const characters = {
+
+const pool: { [key: number]: any } = {
 };
 
-Preload.on(async (scene) => {
+Preload.on(async (scene:Scene) => {
   scene.load.multiatlas('characters', 'assets/characters.json', 'assets');
 
   const res = await fetch('/assets/characters.csv');
   const body = await res.text();
   parse(body, { columns: true }, (err, records) => {
     if (err) throw err;
-    records.forEach(record => {
-      characters[record.no] = record;
+    records.forEach((record: any) => {
+      pool[record.no] = record;
     });
   });
 });
 
-Create.on((scene) => {
-  Object.keys(characters).forEach(no => {
+Create.on((scene:Scene) => {
+  Object.keys(pool).forEach(no => {
     frameGroups.forEach(action => {
       const frameName = `${no}_${action}`;
       const frames = scene.anims.generateFrameNames('characters', { start: 0, end: 1, prefix: `out/${no}/${action}_` });
@@ -30,8 +32,17 @@ Create.on((scene) => {
   });
 });
 
+interface CharacterParam
+{
+  action?: string;
+  x: number;
+  y: number;
+}
+
 class Character {
-  constructor(scene, no, name, { action, x, y }) {
+  sprite: Phaser.GameObjects.Sprite;
+
+  constructor(scene: Scene, no: number, name: string, { action, x, y }: CharacterParam) {    
     this.sprite = scene.add.sprite(x, y, name);
     action = action || 'down';
     this.sprite.anims.play(`${no}_${action}`);
