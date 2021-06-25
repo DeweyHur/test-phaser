@@ -5,8 +5,18 @@ import { Squad } from './squad';
 
 let controllee: Squad;
 
-export const bindSquad = (squad: Squad) => {
+const followAvatar = (scene: Scene) => {
+    if (!controllee) return;
+    const avatar = controllee.avatar();
+    if (avatar) {
+        console.log(`Shift to ${controllee.cursor || 'none'}`);
+        // scene.cameras.main.startFollow(avatar.sprite, true, 0.05, 0.05);
+    }
+}
+
+export const bindSquad = (scene: Scene, squad: Squad) => {
     controllee = squad;
+    followAvatar(scene);
 }
 
 const keys: { [key: string]: Phaser.Input.Keyboard.Key } = {};
@@ -35,8 +45,14 @@ const moveActions = {
 }
 
 const keyActions = {
-    shift: () => controllee.shift(),
-    unshift: () => controllee.unshift(),
+    shift: (scene: Scene) => {
+        controllee.shift();
+        followAvatar(scene);
+    },
+    unshift: (scene: Scene) => {
+        controllee.unshift();
+        followAvatar(scene);
+    },
 }
 
 Update.on((scene: Scene) => {
@@ -52,5 +68,5 @@ Update.on((scene: Scene) => {
 
     Object.entries(keyActions)
         .filter(([key]) => Phaser.Input.Keyboard.JustDown(keys[key]))
-        .forEach(([_, func]) => func());
+        .forEach(([_, func]) => func(scene));
 });
