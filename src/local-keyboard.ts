@@ -12,10 +12,10 @@ export const bindSquad = (squad: Squad) => {
 const keys: { [key: string]: Phaser.Input.Keyboard.Key } = {};
 
 const keyCodes = {
-    left: Phaser.Input.Keyboard.KeyCodes.NUMPAD_FOUR,
-    right: Phaser.Input.Keyboard.KeyCodes.NUMPAD_SIX,
-    up: Phaser.Input.Keyboard.KeyCodes.NUMPAD_EIGHT,
-    down: Phaser.Input.Keyboard.KeyCodes.NUMPAD_TWO,
+    left: Phaser.Input.Keyboard.KeyCodes.A,
+    right: Phaser.Input.Keyboard.KeyCodes.D,
+    up: Phaser.Input.Keyboard.KeyCodes.W,
+    down: Phaser.Input.Keyboard.KeyCodes.S,
     shift: Phaser.Input.Keyboard.KeyCodes.RIGHT,
     unshift: Phaser.Input.Keyboard.KeyCodes.LEFT,
 }
