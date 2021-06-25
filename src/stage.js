@@ -9,15 +9,15 @@ const Stage = () => {
     
     React.useEffect(() => {
         Preload.on((scene) => {
-            scene.load.image('base_tiles', 'assets/buch-outdoor.png');
-            scene.load.tilemapTiledJSON('tilemap', 'assets/outside.json');
+            scene.load.image('base_tiles', 'assets/image/항구맵타일002.bmp');
+            scene.load.tilemapTiledJSON('tilemap', 'assets/istanbul.json');
             scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);
         });
         Create.on((scene) => {
             const map = scene.make.tilemap({ key: 'tilemap' });
-            const tileset = map.addTilesetImage('outdoor', 'base_tiles');
-            map.createLayer('Ground', tileset);
-            map.createLayer('Fringe', tileset);
+            const tileset = map.addTilesetImage('02 이슬람', 'base_tiles');
+            map.createLayer('entrance', tileset);
+            map.createLayer('maptile', tileset);
 
             const music = scene.sound.add('bgm', { loop: true });
             music.play();
