@@ -9,7 +9,7 @@ const frameGroups = [
 const pool: { [key: number]: any } = {
 };
 
-Preload.on(async (scene:Scene) => {
+Preload.on(async (scene: Scene) => {
   scene.load.multiatlas('characters', 'assets/characters.json', 'assets');
 
   const res = await fetch('/assets/characters.csv');
@@ -22,7 +22,7 @@ Preload.on(async (scene:Scene) => {
   });
 });
 
-Create.on((scene:Scene) => {
+Create.on((scene: Scene) => {
   Object.keys(pool).forEach(no => {
     frameGroups.forEach(action => {
       const frameName = `${no}_${action}`;
@@ -32,21 +32,49 @@ Create.on((scene:Scene) => {
   });
 });
 
-interface CharacterParam
-{
+export interface Param {
   action?: string;
+  speed?: number;
+}
+
+export interface Position {
   x: number;
   y: number;
 }
 
-class Character {
+export class Character {
   sprite: Phaser.GameObjects.Sprite;
+  no: number;
+  action: string;
+  speed: number;
 
-  constructor(scene: Scene, no: number, name: string, { action, x, y }: CharacterParam) {    
+  constructor(scene: Scene, no: number, name: string, { x, y }: Position, {
+    action = 'down', speed = 8
+  }: Param = {}) {
     this.sprite = scene.add.sprite(x, y, name);
-    action = action || 'down';
-    this.sprite.anims.play(`${no}_${action}`);
+    this.speed = speed;
+    this.no = no;
+    this.play(action);
+    this.action = action;
+  }
+
+  play(action: string) {
+    if( action === this.action ) return;
+    this.action = action;
+    this.sprite.anims.play(`${this.no}_${action}`)
+  }
+
+  setDirection({ x, y }: Position) {
+    this.sprite.x += x;
+    this.sprite.y += y;
+    let newAction;
+    if (x < 0) newAction = 'left';
+    else if (x > 0) newAction = 'right';
+    else if (y < 0) newAction = 'up';
+    else if (y > 0) newAction = 'down';
+
+    if (newAction) {
+      this.play(newAction);
+    }
   }
 };
-
-export default Character;

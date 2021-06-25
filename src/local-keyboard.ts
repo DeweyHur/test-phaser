@@ -1,5 +1,5 @@
 import { Create, Update } from './game';
-import Character from './character';
+import { Character, Position } from './character';
 import { Scene } from 'phaser';
 
 let controllee: Character;
@@ -25,15 +25,17 @@ Create.on((scene: Scene) => {
 });
 
 const keyAction = {
-    left: () => controllee.sprite.x -= 1,
-    right: () => controllee.sprite.x += 1,
-    up: () => controllee.sprite.y -= 1,
-    down: () => controllee.sprite.y += 1,
+    left: ({ x, y }: Position) => ({ x: x - 1, y }),
+    right: ({ x, y }: Position) => ({ x: x + 1, y }),
+    up: ({ x, y }: Position) => ({ x, y: y - 1 }),
+    down: ({ x, y }: Position) => ({ x, y: y + 1 }),
 }
 
 Update.on((scene: Scene) => {
-    if( !controllee ) return;
-    Object.entries(keyAction)
-        .filter(([key, func]) => keys[key].isDown)
-        .forEach(([key, func]) => func())
+    if (!controllee) return;
+
+    const dir = Object.entries(keyAction)
+        .filter(([key]) => keys[key].isDown)
+        .reduce((pos, [_, func]) => func(pos), { x: 0, y: 0 });
+    controllee.setDirection(dir);
 });

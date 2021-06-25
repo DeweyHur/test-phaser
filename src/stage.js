@@ -1,6 +1,6 @@
 import React from 'react';
 import { Preload, Create } from './game';
-import Character from './character';
+import { Character } from './character';
 import { bindCharacter } from './local-keyboard';
 
 const Stage = () => {
