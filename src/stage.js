@@ -9,13 +9,13 @@ const Stage = () => {
     
     React.useEffect(() => {
         Preload.on((scene) => {
-            scene.load.image('base_tiles', 'assets/image/항구맵타일002.bmp');
+            scene.load.image('base_tiles', 'assets/image/istanbul.png');
             scene.load.tilemapTiledJSON('tilemap', 'assets/istanbul.json');
             scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);
         });
         Create.on((scene) => {
             const map = scene.make.tilemap({ key: 'tilemap' });
-            const tileset = map.addTilesetImage('02 이슬람', 'base_tiles');
+            const tileset = map.addTilesetImage('istanbul', 'base_tiles');
             map.createLayer('entrance', tileset);
             map.createLayer('maptile', tileset);
 
