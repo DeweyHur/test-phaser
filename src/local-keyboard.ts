@@ -10,7 +10,7 @@ const followAvatar = (scene: Scene) => {
     const avatar = controllee.avatar();
     if (avatar) {
         console.log(`Shift to ${controllee.cursor || 'none'}`);
-        // scene.cameras.main.startFollow(avatar.sprite, true, 0.05, 0.05);
+        scene.cameras.main.startFollow(avatar.sprite, true, 0.05, 0.05);
     }
 }
 
