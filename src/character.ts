@@ -49,7 +49,7 @@ export class Character {
   speed: number;
 
   constructor(scene: Scene, no: number, name: string, { x, y }: Position, {
-    action = 'down', speed = 8
+    action = 'down', speed = 4
   }: Param = {}) {
     this.sprite = scene.add.sprite(x, y, name);
     this.speed = speed;
@@ -65,8 +65,8 @@ export class Character {
   }
 
   setDirection({ x, y }: Position) {
-    this.sprite.x += x;
-    this.sprite.y += y;
+    this.sprite.x += x * this.speed;
+    this.sprite.y += y * this.speed;
     let newAction;
     if (x < 0) newAction = 'left';
     else if (x > 0) newAction = 'right';

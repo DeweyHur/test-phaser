@@ -1,15 +1,17 @@
 import React from 'react';
 import { Preload, Create } from './game';
 import { Character } from './character';
-import { bindCharacter } from './local-keyboard';
+import { bindSquad } from './local-keyboard';
+import { Squad } from './squad';
 
 const Stage = () => {
     const ref = React.useRef(null);
-
+    
     React.useEffect(() => {
         Preload.on((scene) => {
             scene.load.image('base_tiles', 'assets/buch-outdoor.png');
-            scene.load.tilemapTiledJSON('tilemap', 'assets/outside.json');        
+            scene.load.tilemapTiledJSON('tilemap', 'assets/outside.json');
+            scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);
         });
         Create.on((scene) => {
             const map = scene.make.tilemap({ key: 'tilemap' });
@@ -17,12 +19,18 @@ const Stage = () => {
             map.createLayer('Ground', tileset);
             map.createLayer('Fringe', tileset);
 
-            const hero = new Character(scene, 0, '0', { x: 300, y: 400 });
-            bindCharacter(hero);
-            new Character(scene, 1, '1', { x: 350, y: 400 });
-            new Character(scene, 2, '2', { x: 400, y: 400 });
-            new Character(scene, 3, '3', { x: 450, y: 400 });
-            new Character(scene, 4, '4', { x: 500, y: 400 });
+            const music = scene.sound.add('bgm', { loop: true });
+            music.play();
+
+            const mySquad = new Squad('mine');
+            mySquad.add(
+                new Character(scene, 0, '0', { x: 300, y: 400 }), 
+                new Character(scene, 1, '1', { x: 350, y: 400 }),
+                new Character(scene, 2, '2', { x: 400, y: 400 }),
+                new Character(scene, 3, '3', { x: 450, y: 400 }),
+                new Character(scene, 4, '4', { x: 500, y: 400 }),
+            );
+            bindSquad(mySquad);
         });
     }, []);
 

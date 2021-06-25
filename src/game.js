@@ -18,10 +18,12 @@ export const Update = {
   on: func => emitter.on(symbols.update, func)
 }
 
+const { innerWidth: width, innerHeight: height } = window;
+
 const config = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width,
+  height,
   physics: {
     default: 'arcade',
     arcade: { gravity: { y: 200 } }

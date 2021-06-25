@@ -1,20 +1,23 @@
 import { Create, Update } from './game';
-import { Character, Position } from './character';
+import { Position } from './character';
 import { Scene } from 'phaser';
+import { Squad } from './squad';
 
-let controllee: Character;
+let controllee: Squad;
 
-export const bindCharacter = (character: Character) => {
-    controllee = character;
+export const bindSquad = (squad: Squad) => {
+    controllee = squad;
 }
 
 const keys: { [key: string]: Phaser.Input.Keyboard.Key } = {};
 
 const keyCodes = {
-    left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-    right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-    up: Phaser.Input.Keyboard.KeyCodes.UP,
-    down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+    left: Phaser.Input.Keyboard.KeyCodes.NUMPAD_FOUR,
+    right: Phaser.Input.Keyboard.KeyCodes.NUMPAD_SIX,
+    up: Phaser.Input.Keyboard.KeyCodes.NUMPAD_EIGHT,
+    down: Phaser.Input.Keyboard.KeyCodes.NUMPAD_TWO,
+    shift: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+    unshift: Phaser.Input.Keyboard.KeyCodes.LEFT,
 }
 
 Create.on((scene: Scene) => {
@@ -24,18 +27,30 @@ Create.on((scene: Scene) => {
     scene.input.keyboard.addCapture(Object.keys(keyCodes));
 });
 
-const keyAction = {
+const moveActions = {
     left: ({ x, y }: Position) => ({ x: x - 1, y }),
     right: ({ x, y }: Position) => ({ x: x + 1, y }),
     up: ({ x, y }: Position) => ({ x, y: y - 1 }),
     down: ({ x, y }: Position) => ({ x, y: y + 1 }),
 }
 
+const keyActions = {
+    shift: () => controllee.shift(),
+    unshift: () => controllee.unshift(),
+}
+
 Update.on((scene: Scene) => {
     if (!controllee) return;
 
-    const dir = Object.entries(keyAction)
+    const avatar = controllee.avatar();
+    if (!avatar) return;
+
+    const dir = Object.entries(moveActions)
         .filter(([key]) => keys[key].isDown)
         .reduce((pos, [_, func]) => func(pos), { x: 0, y: 0 });
-    controllee.setDirection(dir);
+    avatar.setDirection(dir);
+
+    Object.entries(keyActions)
+        .filter(([key]) => Phaser.Input.Keyboard.JustDown(keys[key]))
+        .forEach(([_, func]) => func());
 });
