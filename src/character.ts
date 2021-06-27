@@ -83,12 +83,15 @@ export class Character {
     this.aiIdle();
   }
 
-  onUpdate(scene: Scene) {
+  onUpdate(scene: Scene, time: number, delta: number) {
     const move: MoveActionType = this.local ? this.nextMove : this.ai.next;
     let { x, y } = MoveActions[move];
     x *= this.speed;
     y *= this.speed;
     this.sprite.setVelocity(x, y);
+    if (move in MoveKeyActionEnum) {
+      this.play(move);
+    }
   }
 
   constructor(scene: Scene, no: number, name: string, { x, y }: Position, {
@@ -105,17 +108,17 @@ export class Character {
     this.local = false;
     this.nextMove = action;
     scene.events.on('preupdate', () => this.onPreUpdate.call(this, scene));
-    scene.events.on('update', () => this.onUpdate.call(this, scene));
+    scene.events.on('update', (...rest: [Scene, number, number]) => this.onUpdate.call(this, ...rest));
   }
 
-  play(action: string) {
+  protected play(action: string) {
     if (action === this.action) return;
     this.action = action;
     this.sprite.anims.play(`${this.no}_${action}`)
   }
 
   setMove(...moves: MoveActionType[]) {
-    if (moves.length === 0) { 
+    if (moves.length === 0) {
       this.nextMove = MoveActionEnum.idle;
     }
     else if (moves.length === 1) {
@@ -133,6 +136,6 @@ export class Character {
   }
 
   setMoveStop() {
-    
+
   }
 };
