@@ -9,20 +9,25 @@ const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
     const tileset: Phaser.Tilemaps.Tileset = map.addTilesetImage('istanbul', 'base_tiles');
     map.createLayer('entrance', tileset);
-    map.createLayer('maptile', tileset);
+    const tilelayer = map.createLayer('maptile', tileset);
+
     scene.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
+    tilelayer.setCollisionByProperty({ collides: true });
+
+
+    console.log(map.tilesets[0])
     // const music = scene.sound.add('bgm', { loop: true });
     // music.play();
 
     const mySquad = new Squad(scene, 'mine');
     mySquad.add(
-        new Character(scene, 0, '0', { x: 300, y: 400 }),
-        new Character(scene, 1, '1', { x: 350, y: 400 }),
-        new Character(scene, 2, '2', { x: 400, y: 400 }),
-        new Character(scene, 3, '3', { x: 450, y: 400 }),
-        new Character(scene, 4, '4', { x: 500, y: 400 }),
+        new Character(scene, 0, '0', { x: 300, y: 300 }),
+        new Character(scene, 1, '1', { x: 350, y: 300 }),
+        new Character(scene, 2, '2', { x: 400, y: 300 }),
+        new Character(scene, 3, '3', { x: 450, y: 300 }),
+        new Character(scene, 4, '4', { x: 500, y: 300 }),
     );
     bindSquad(scene, mySquad);
 
@@ -34,20 +39,33 @@ const onCreate = (scene: Scene) => {
         new Character(scene, 59, '59', { x: 950, y: 800 }),
         new Character(scene, 60, '60', { x: 1000, y: 800 }),
     );
+    
+    
 
     scene.physics.add.collider(mySquad.group, yourSquad.group, (lhs, rhs) => {
         console.log('hit');
     });
+
+    
+    scene.physics.add.collider(mySquad.group, tilelayer, (lhs, rhs) => {
+        console.log('wall');
+    });
+
+    scene.physics.add.collider(yourSquad.group, tilelayer, (lhs, rhs) => {
+        console.log('wall');
+    });
+
+
 }
+
 
 const Stage = () => {
     React.useEffect(() => {
         Preload.on((scene: Scene) => {
             scene.events.on('create', onCreate);  
-
             scene.load.image('base_tiles', 'assets/image/istanbul.png');
             scene.load.tilemapTiledJSON('tilemap', 'assets/istanbul.json');
-            scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);
+            scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);            
         });
     }, []);
 
