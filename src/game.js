@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import Phaser from 'phaser';
 
 const emitter = new EventEmitter();
-const events = ['preload', 'create', 'update'];
+const events = ['preload', 'create', 'prestep', 'step', 'preupdate', 'postupdate', 'update'];
 const symbols = events.reduce((obj, event) => {
   obj[event] = Symbol(event);
   return obj;

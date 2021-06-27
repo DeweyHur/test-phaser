@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { Update } from './game';
 import { Character } from './character';
 
 export class Squad {
@@ -15,6 +16,11 @@ export class Squad {
             bounceX: 1, bounceY: 1
         });
         this.characters = [];
+        Update.on((scene: Scene) => {
+            this.characters.forEach(character => {
+                
+            });
+        });
     }
 
     add(...characters: Character[]) {
