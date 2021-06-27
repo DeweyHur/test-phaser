@@ -8,13 +8,14 @@ import { Scene } from 'phaser';
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
     const tileset: Phaser.Tilemaps.Tileset = map.addTilesetImage('istanbul', 'base_tiles');
-    map.createLayer('entrance', tileset);
+    const entrance = map.createLayer('entrance', tileset);
     const tilelayer = map.createLayer('maptile', tileset);
 
     scene.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     tilelayer.setCollisionByProperty({ collides: true });
+
 
 
     console.log(map.tilesets[0])
@@ -52,7 +53,7 @@ const onCreate = (scene: Scene) => {
     });
 
     scene.physics.add.collider(yourSquad.group, tilelayer, (lhs, rhs) => {
-        console.log('wall');
+        console.log('wallyoursquad');
     });
 
 
