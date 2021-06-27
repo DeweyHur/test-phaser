@@ -3,7 +3,7 @@ import { Preload } from './game';
 import { Character } from './character';
 import { bindSquad } from './local-keyboard';
 import { Squad } from './squad';
-import { Scene } from 'phaser';
+import { GameObjects, Scene } from 'phaser';
 
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
@@ -15,7 +15,7 @@ const onCreate = (scene: Scene) => {
     scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     tilelayer.setCollisionByProperty({ collides: true });
-
+    entrance.setCollisionByProperty({ palace: true, palaceout: true });
 
 
     console.log(map.tilesets[0])
@@ -31,6 +31,8 @@ const onCreate = (scene: Scene) => {
         new Character(scene, 4, '4', { x: 500, y: 300 }),
     );
     bindSquad(scene, mySquad);
+
+    console.log(mySquad)
 
     const yourSquad = new Squad(scene, 'yours');
     yourSquad.add(
@@ -49,8 +51,19 @@ const onCreate = (scene: Scene) => {
     });
 
     scene.physics.add.collider(yourSquad.group, tilelayer, (lhs, rhs) => {
-        console.log('wallyoursquad');
+        // console.log('wallyoursquad');
     });
+
+    scene.physics.add.collider(mySquad.group, entrance, (lhs, rhs) => {
+        
+        lhs.body.reset(2152,107)
+    
+        // lhs.body.reset(500,300)
+        
+
+    });
+
+
 }
 
 
