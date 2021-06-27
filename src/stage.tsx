@@ -13,8 +13,8 @@ const onCreate = (scene: Scene) => {
     scene.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-    const music = scene.sound.add('bgm', { loop: true });
-    music.play();
+    // const music = scene.sound.add('bgm', { loop: true });
+    // music.play();
 
     const mySquad = new Squad(scene, 'mine');
     mySquad.add(

@@ -1,5 +1,5 @@
 import { Preload } from './game';
-import { MoveActions } from './character';
+import { MoveKeyActionEnum } from './character';
 import { Scene } from 'phaser';
 import { Squad } from './squad';
 
@@ -54,10 +54,9 @@ const onUpdate = (scene: Scene) => {
     const avatar = controllee.avatar();
     if (!avatar) return;
 
-    const dir = Object.entries(MoveActions)
-        .filter(([key]) => keys[key].isDown)
-        .reduce((pos, [_, func]) => func(pos), { x: 0, y: 0 });
-    avatar.setDirection(dir);
+    const moves = Object.values(MoveKeyActionEnum)
+        .filter(action => keys[action].isDown)    
+    avatar.setMove(...moves);
 
     Object.entries(keyActions)
         .filter(([key]) => Phaser.Input.Keyboard.JustDown(keys[key]))
@@ -65,6 +64,6 @@ const onUpdate = (scene: Scene) => {
 }
 
 Preload.on((scene: Scene) => {
-    scene.events.on('create', onCreate);
-    scene.events.on('update', onUpdate);
+    scene.events.on('create', () => onCreate.call(this, scene));
+    scene.events.on('update', () => onUpdate.call(this, scene));
 });
