@@ -41,6 +41,10 @@ const onCreate = (scene: Scene) => {
     );
 
     scene.physics.add.collider(mySquad.group, yourSquad.group, (lhs, rhs) => {
+        const lhsChar: Character = lhs.getData('parent');
+        const rhsChar: Character = rhs.getData('parent');
+        console.log(`${lhsChar.name} : ${rhsChar.name}`);
+        
     });
 
     
