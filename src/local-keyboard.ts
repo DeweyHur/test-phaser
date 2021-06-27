@@ -1,5 +1,5 @@
-import { Create, Update } from './game';
-import { Position } from './character';
+import { Preload } from './game';
+import { MoveActions } from './character';
 import { Scene } from 'phaser';
 import { Squad } from './squad';
 
@@ -30,19 +30,12 @@ const keyCodes = {
     unshift: Phaser.Input.Keyboard.KeyCodes.LEFT,
 }
 
-Create.on((scene: Scene) => {
+const onCreate = (scene: Scene) => {
     Object.entries(keyCodes).forEach(([key, code]) => {
         keys[key] = scene.input.keyboard.addKey(code);
     });
     scene.input.keyboard.addCapture(Object.keys(keyCodes));
-});
-
-const moveActions = {
-    left: ({ x, y }: Position) => ({ x: x - 1, y }),
-    right: ({ x, y }: Position) => ({ x: x + 1, y }),
-    up: ({ x, y }: Position) => ({ x, y: y - 1 }),
-    down: ({ x, y }: Position) => ({ x, y: y + 1 }),
-}
+};
 
 const keyActions = {
     shift: (scene: Scene) => {
@@ -55,13 +48,13 @@ const keyActions = {
     },
 }
 
-Update.on((scene: Scene) => {
+const onUpdate = (scene: Scene) => {
     if (!controllee) return;
 
     const avatar = controllee.avatar();
     if (!avatar) return;
 
-    const dir = Object.entries(moveActions)
+    const dir = Object.entries(MoveActions)
         .filter(([key]) => keys[key].isDown)
         .reduce((pos, [_, func]) => func(pos), { x: 0, y: 0 });
     avatar.setDirection(dir);
@@ -69,4 +62,9 @@ Update.on((scene: Scene) => {
     Object.entries(keyActions)
         .filter(([key]) => Phaser.Input.Keyboard.JustDown(keys[key]))
         .forEach(([_, func]) => func(scene));
+}
+
+Preload.on((scene: Scene) => {
+    scene.events.on('create', onCreate);
+    scene.events.on('update', onUpdate);
 });

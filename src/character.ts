@@ -6,6 +6,13 @@ const frameGroups = [
   'up', 'left', 'right', 'down', 'hit', 'dead'
 ];
 
+export const MoveActions: { [key: string]: Function } = {
+  left: ({ x, y }: Position) => ({ x: x - 1, y }),
+  right: ({ x, y }: Position) => ({ x: x + 1, y }),
+  up: ({ x, y }: Position) => ({ x, y: y - 1 }),
+  down: ({ x, y }: Position) => ({ x, y: y + 1 }),
+}
+
 const pool: { [key: number]: any } = {
 };
 
@@ -21,7 +28,7 @@ const onCreate = (scene: Scene) => {
 
 Preload.on(async (scene: Scene) => {
   scene.load.multiatlas('characters', 'assets/characters.json', 'assets');
-  scene.events.on('create', onCreate);  
+  scene.events.on('create', onCreate);
 
   const res = await fetch('/assets/characters.csv');
   const body = await res.text();
@@ -50,6 +57,13 @@ export class Character {
   speed: number;
   dirty: boolean;
 
+  onPreUpdate(scene: Scene) {
+    const index = Math.trunc(Math.random() * 4);
+    const frame = frameGroups[index];
+    const dir = MoveActions[frame]({ x: 0, y: 0 })
+    this.setDirection(dir);
+  }
+
   constructor(scene: Scene, no: number, name: string, { x, y }: Position, {
     action = 'down', speed = 120
   }: Param = {}) {
@@ -60,6 +74,7 @@ export class Character {
     this.play(action);
     this.action = action;
     this.dirty = false;
+    scene.events.on('preupdate', () => this.onPreUpdate.call(this, scene));
   }
 
   play(action: string) {
