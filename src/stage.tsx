@@ -40,23 +40,20 @@ const onCreate = (scene: Scene) => {
         new Character(scene, 59, '59', { x: 950, y: 800 }),
         new Character(scene, 60, '60', { x: 1000, y: 800 }),
     );
-    
-    
 
     scene.physics.add.collider(mySquad.group, yourSquad.group, (lhs, rhs) => {
-        console.log('hit');
     });
 
     
     scene.physics.add.collider(mySquad.group, tilelayer, (lhs, rhs) => {
-        console.log('wall');
     });
 
     scene.physics.add.collider(yourSquad.group, tilelayer, (lhs, rhs) => {
+<<<<<<< HEAD
         console.log('wallyoursquad');
+=======
+>>>>>>> 713d211e8e1d9e333a996799283026caacd488ad
     });
-
-
 }
 
 
