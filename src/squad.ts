@@ -1,17 +1,25 @@
+import { Scene } from 'phaser';
 import { Character } from './character';
 
 export class Squad {
+    scene: Scene;
     name: string;
+    group: Phaser.Physics.Arcade.Group;
     characters: Character[];
     cursor?: number;
 
-    constructor(name: string) {
+    constructor(scene: Scene, name: string) {
         this.name = name;
+        this.scene = scene;
+        this.group = scene.physics.add.group({
+            bounceX: 1, bounceY: 1
+        });
         this.characters = [];
     }
 
     add(...characters: Character[]) {
         this.characters = [...this.characters, ...characters];
+        characters.forEach(x => this.group.add(x.sprite));
         if (this.characters.length > 0) {
             this.cursor = this.cursor || 0;
         }

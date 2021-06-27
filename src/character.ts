@@ -43,7 +43,7 @@ export interface Position {
 }
 
 export class Character {
-  sprite: Phaser.GameObjects.Sprite;
+  sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   no: number;
   action: string;
   speed: number;
@@ -51,7 +51,8 @@ export class Character {
   constructor(scene: Scene, no: number, name: string, { x, y }: Position, {
     action = 'down', speed = 4
   }: Param = {}) {
-    this.sprite = scene.add.sprite(x, y, name);
+    this.sprite = scene.physics.add.sprite(x, y, name)
+      .setCollideWorldBounds(true);
     this.speed = speed;
     this.no = no;
     this.play(action);
@@ -65,7 +66,7 @@ export class Character {
   }
 
   setDirection({ x, y }: Position) {
-    this.sprite.x += x * this.speed;
+    this.sprite.setX( this.sprite.x + x * this.speed );
     this.sprite.y += y * this.speed;
     let newAction;
     if (x < 0) newAction = 'left';

@@ -26,7 +26,6 @@ const config = {
   height,
   physics: {
     default: 'arcade',
-    arcade: { gravity: { y: 200 } }
   },
   scene: events.reduce((obj, event) => {
     obj[event] = function () {
