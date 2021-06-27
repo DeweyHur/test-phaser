@@ -49,10 +49,7 @@ const onCreate = (scene: Scene) => {
     });
 
     scene.physics.add.collider(yourSquad.group, tilelayer, (lhs, rhs) => {
-<<<<<<< HEAD
         console.log('wallyoursquad');
-=======
->>>>>>> 713d211e8e1d9e333a996799283026caacd488ad
     });
 }
 
