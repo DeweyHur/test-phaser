@@ -3,8 +3,7 @@ import { Preload } from './game';
 import { Character } from './character';
 import { bindSquad } from './local-keyboard';
 import { Squad } from './squad';
-import { GameObjects, Scene } from 'phaser';
-import { tokenToString } from 'typescript';
+import { Scene } from 'phaser';
 
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
@@ -24,9 +23,6 @@ const onCreate = (scene: Scene) => {
     mySquad.add(
         new Character(scene, 0, '0', { x: 300, y: 300 }),
         new Character(scene, 1, '1', { x: 350, y: 300 }),
-        new Character(scene, 2, '2', { x: 400, y: 300 }),
-        new Character(scene, 3, '3', { x: 450, y: 300 }),
-        new Character(scene, 4, '4', { x: 500, y: 300 }),
     );
     bindSquad(scene, mySquad);
 
@@ -34,6 +30,9 @@ const onCreate = (scene: Scene) => {
 
     const yourSquad = new Squad(scene, 'yours');
     yourSquad.add(
+        new Character(scene, 2, '2', { x: 400, y: 300 }),
+        new Character(scene, 3, '3', { x: 450, y: 300 }),
+        new Character(scene, 4, '4', { x: 500, y: 300 }),
         new Character(scene, 56, '56', { x: 800, y: 800 }),
         new Character(scene, 57, '57', { x: 850, y: 800 }),
         new Character(scene, 58, '58', { x: 900, y: 800 }),
@@ -42,9 +41,12 @@ const onCreate = (scene: Scene) => {
     );
 
     scene.physics.add.collider(mySquad.group, yourSquad.group, (lhs, rhs) => {
+        const lhsChar: Character = lhs.getData('character');
+        const rhsChar: Character = rhs.getData('character');       
+        lhsChar.hitBy(scene, rhsChar);
+        rhsChar.hitBy(scene, lhsChar);        
     });
 
-    
     scene.physics.add.collider(mySquad.group, tilelayer, (lhs, rhs) => {
     });
 
@@ -61,10 +63,10 @@ const onCreate = (scene: Scene) => {
 const Stage = () => {
     React.useEffect(() => {
         Preload.on((scene: Scene) => {
-            scene.events.on('create', onCreate);  
+            scene.events.on('create', onCreate);
             scene.load.image('base_tiles', 'assets/image/istanbul.png');
             scene.load.tilemapTiledJSON('tilemap', 'assets/istanbul.json');
-            scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);            
+            scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);
         });
     }, []);
 
