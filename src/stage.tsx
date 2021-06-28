@@ -4,21 +4,19 @@ import { Character } from './character';
 import { bindSquad } from './local-keyboard';
 import { Squad } from './squad';
 import { GameObjects, Scene } from 'phaser';
+import { tokenToString } from 'typescript';
 
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
     const tileset: Phaser.Tilemaps.Tileset = map.addTilesetImage('istanbul', 'base_tiles');
-    const entrance = map.createLayer('entrance', tileset);
+    const warpzones = map.createFromObjects('warpzones', { scene });
     const tilelayer = map.createLayer('maptile', tileset);
 
     scene.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     scene.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     tilelayer.setCollisionByProperty({ collides: true });
-    entrance.setCollisionByProperty({ palace: true, palaceout: true });
 
-
-    console.log(map.tilesets[0])
     // const music = scene.sound.add('bgm', { loop: true });
     // music.play();
 
@@ -54,10 +52,8 @@ const onCreate = (scene: Scene) => {
         // console.log('wallyoursquad');
     });
 
-    scene.physics.add.collider(mySquad.group, entrance, (lhs, rhs) => {
-        const tile = rhs as any as Phaser.Tilemaps.Tile;
-        if( 'palace' in tile.properties ) lhs.body.reset(2152,107);
-        else if ( 'palaceout' in tile.properties ) lhs.body.reset(500,300);
+    scene.physics.add.collider(mySquad.group, warpzones, (lhs, rhs) => {
+        const tile = rhs as any as Phaser.Tilemaps.Tile;        
     });
 }
 

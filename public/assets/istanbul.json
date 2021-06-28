@@ -1,11 +1,4 @@
 { "compressionlevel":-1,
- "editorsettings":
-    {
-     "export":
-        {
-         "target":"."
-        }
-    },
  "height":96,
  "infinite":false,
  "layers":[
@@ -24,44 +17,56 @@
         {
          "draworder":"topdown",
          "id":3,
-         "name":"Object Layer 1",
+         "name":"warpzones",
          "objects":[
                 {
-                 "height":298.666666666667,
-                 "id":1,
-                 "name":"",
+                 "height":0,
+                 "id":7,
+                 "name":"IntoPalace",
+                 "properties":[
+                        {
+                         "name":"warp",
+                         "type":"object",
+                         "value":9
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":345.333333333333,
-                 "x":2004,
-                 "y":97.3333333333333
+                 "width":0,
+                 "x":519.572953736655,
+                 "y":270.462633451957
                 }, 
                 {
                  "height":0,
-                 "id":4,
+                 "id":9,
+                 "name":"Palace",
+                 "properties":[
+                        {
+                         "name":"warp",
+                         "type":"object",
+                         "value":7
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":2165.48042704626,
+                 "y":106.761565836299
+                }, 
+                {
+                 "height":0,
+                 "id":13,
                  "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":2006,
-                 "y":119
-                }, 
-                {
-                 "height":28.5,
-                 "id":5,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":134,
-                 "x":2006,
-                 "y":119
+                 "x":776.433866562622,
+                 "y":-483.808037456106
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -78,10 +83,10 @@
          "y":0
         }],
  "nextlayerid":4,
- "nextobjectid":7,
+ "nextobjectid":14,
  "orientation":"orthogonal",
  "renderorder":"right-down",
- "tiledversion":"1.4.3",
+ "tiledversion":"1.7.0",
  "tileheight":16,
  "tilesets":[
         {
@@ -2283,24 +2288,24 @@
                  "id":5,
                  "properties":[
                         {
-                         "name":"palace",
-                         "type":"bool",
-                         "value":true
+                         "name":"warp",
+                         "type":"object",
+                         "value":11
                         }]
                 }, 
                 {
                  "id":11,
                  "properties":[
                         {
-                         "name":"palaceout",
-                         "type":"bool",
-                         "value":true
+                         "name":"warp",
+                         "type":"object",
+                         "value":0
                         }]
                 }],
          "tilewidth":32
         }],
  "tilewidth":16,
  "type":"map",
- "version":1.4,
+ "version":"1.6",
  "width":180
 }
