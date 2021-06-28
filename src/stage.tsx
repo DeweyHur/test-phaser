@@ -55,15 +55,10 @@ const onCreate = (scene: Scene) => {
     });
 
     scene.physics.add.collider(mySquad.group, entrance, (lhs, rhs) => {
-        
-        lhs.body.reset(2152,107)
-    
-        // lhs.body.reset(500,300)
-        
-
+        const tile = rhs as any as Phaser.Tilemaps.Tile;
+        if( 'palace' in tile.properties ) lhs.body.reset(2152,107);
+        else if ( 'palaceout' in tile.properties ) lhs.body.reset(500,300);
     });
-
-
 }
 
 
