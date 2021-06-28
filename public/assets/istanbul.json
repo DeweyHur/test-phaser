@@ -22,12 +22,12 @@
                 {
                  "height":0,
                  "id":7,
-                 "name":"IntoPalace",
+                 "name":"enter_palace_in",
                  "properties":[
                         {
                          "name":"warp",
                          "type":"object",
-                         "value":9
+                         "value":20
                         }],
                  "rotation":0,
                  "type":"",
@@ -39,30 +39,41 @@
                 {
                  "height":0,
                  "id":9,
-                 "name":"Palace",
+                 "name":"quit_palace_in",
                  "properties":[
                         {
                          "name":"warp",
                          "type":"object",
-                         "value":7
+                         "value":21
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
                  "x":2165.48042704626,
-                 "y":106.761565836299
+                 "y":106.76
                 }, 
                 {
                  "height":0,
-                 "id":13,
-                 "name":"",
+                 "id":20,
+                 "name":"enter_place_out",
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":776.433866562622,
-                 "y":-483.808037456106
+                 "x":2165.16308119362,
+                 "y":149.24
+                }, 
+                {
+                 "height":0,
+                 "id":21,
+                 "name":"quit_palace_out",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":523.24774462179,
+                 "y":317.02
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -82,8 +93,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":4,
- "nextobjectid":14,
+ "nextlayerid":5,
+ "nextobjectid":22,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.0",

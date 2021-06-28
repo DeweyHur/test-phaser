@@ -8,7 +8,22 @@ import { Scene } from 'phaser';
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
     const tileset: Phaser.Tilemaps.Tileset = map.addTilesetImage('istanbul', 'base_tiles');
-    const warpzones = map.createFromObjects('warpzones', { scene });
+    const warpzones: Phaser.GameObjects.GameObject[] = map.createFromObjects('warpzones', { scene });
+    const warpzonesLayer: Phaser.Tilemaps.ObjectLayer = map.getObjectLayer('warpzones');
+    warpzones.forEach((warpzone, index) => {
+        scene.physics.add.existing(warpzone);
+        const warpId = warpzone.getData('warp');
+        if ( warpId ) {
+            const index = warpzonesLayer.objects.findIndex(x => x.id === warpId);
+            if( index !== -1 ) {
+                warpzone.setData('warp', warpzones[index]);
+            }
+            else {
+                console.error(`Warp ${warpId} indicates a wrong node.`);
+                warpzone.setData('warp', null);
+            }
+        }
+    });
     const tilelayer = map.createLayer('maptile', tileset);
 
     scene.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
@@ -41,10 +56,11 @@ const onCreate = (scene: Scene) => {
     );
 
     scene.physics.add.collider(mySquad.group, yourSquad.group, (lhs, rhs) => {
+        scene.physics.world.separate(lhs.body as Phaser.Physics.Arcade.Body, rhs.body as Phaser.Physics.Arcade.Body, () => { }, null, true);
         const lhsChar: Character = lhs.getData('character');
-        const rhsChar: Character = rhs.getData('character');       
+        const rhsChar: Character = rhs.getData('character');
         lhsChar.hitBy(scene, rhsChar);
-        rhsChar.hitBy(scene, lhsChar);        
+        rhsChar.hitBy(scene, lhsChar);
     });
 
     scene.physics.add.collider(mySquad.group, tilelayer, (lhs, rhs) => {
@@ -54,8 +70,13 @@ const onCreate = (scene: Scene) => {
         // console.log('wallyoursquad');
     });
 
-    scene.physics.add.collider(mySquad.group, warpzones, (lhs, rhs) => {
-        const tile = rhs as any as Phaser.Tilemaps.Tile;        
+    scene.physics.add.overlap(mySquad.group, warpzones, (lhs, rhs) => {
+        const warp = lhs.getData('warp');
+        if( warp ) {
+            rhs.body.reset(warp.x, warp.y);
+            const rhsChar: Character = rhs.getData('character');
+            console.log(`${rhsChar.name} jumps to ${warp.x}, ${warp.y}`);
+        }
     });
 }
 
