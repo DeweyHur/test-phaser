@@ -84,7 +84,7 @@ const onCreate = (scene: Scene) => {
 const Stage = () => {
     React.useEffect(() => {
         Preload.on((scene: Scene) => {
-            scene.events.on('create', onCreate);
+            scene.events.on('create', () => onCreate.call(this, scene));
             scene.load.image('base_tiles', 'assets/image/istanbul.png');
             scene.load.tilemapTiledJSON('tilemap', 'assets/istanbul.json');
             scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);
