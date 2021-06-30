@@ -50,10 +50,10 @@ const onCreate = (scene: Scene) => {
 
     const Varcia = new Squad(scene, 'Varcia', { x: 550, y: 650 });
     [
-        [30, 'John'],
-        [31, 'Xenel'],
-        [34, 'VWarrior'],
-        ...Array.from({ length: 3 }).map((_, index) => ([33, `VKnight${index + 1}`])),
+        [29, 'John'],
+        [30, 'Xenel'],
+        [49, 'VWarrior'],
+        ...Array.from({ length: 3 }).map((_, index) => ([50, `VKnight${index + 1}`])),
         ...Array.from({ length: 6 }).map((_, index) => ([58, `VSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);

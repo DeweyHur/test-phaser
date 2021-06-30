@@ -5,8 +5,8 @@ import parse from 'csv-parse';
 export const StatEnum = { hp: 'hp', hr: 'hr', at: 'at', ar: 'ar', df: 'df', dr: 'dr', aa: 'aa', ad: 'ad', md: 'md' }
 export type StatType = typeof StatEnum[keyof typeof StatEnum];
 
-const pool: { [key: number]: any } = {};
-export const getBaseStat = (no: number) => pool[no];
+export const characterPool: { [key: number]: any } = {};
+export const getBaseStat = (no: number) => characterPool[no];
 
 Preload.on(async (scene: Scene) => {
     scene.load.multiatlas('characters', 'assets/characters.json', 'assets');
@@ -17,7 +17,7 @@ Preload.on(async (scene: Scene) => {
         if (err) throw err;
         records.forEach((record: any) => {
             Object.keys(StatEnum).forEach(key => record[key] = +record[key]);
-            pool[record.no] = record;
+            characterPool[record.no] = record;
         });
     });
 });
@@ -62,7 +62,7 @@ export class CreatureController {
         Object.entries(statMod).forEach(([key, eq]) => creature.setStat(key, eq(stat[key], lv)));
         this.hp = creature.stat(StatEnum.hp);
 
-        scene.events.on('postupdate', (scene: Scene) => {
+        scene.events.on('postupdate', () => {
             if (!creature.alive()) return;
             this.updateIndicator(scene);
         });

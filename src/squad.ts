@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { Character } from './character';
+import { Character, Position } from './character';
 import { Creature, CreatureController } from './creature';
 import { KeyEnum, KeyEventEnum, keyOff, keyOn } from './local-keyboard';
 import { DirectionType, MoveAgentEventEnum, MoveController } from './move-controller';
@@ -34,7 +34,6 @@ const defaultFormation: Formation = [
     { x: 256, y: -64 },
 ]
 
-type Position = { x: number, y: number };
 const formationRotation: { [key in DirectionType]: Function } = {
     down: ({ x, y }: Position) => ({ x, y }),
     left: ({ x, y }: Position) => ({ x: -y, y: x }),
@@ -63,14 +62,15 @@ export class Squad {
         this.squadrons = [];
     }
 
-    protected squadronPosition(index: number): Phaser.Math.Vector2 | null {
+    protected squadronPosition(index: number): Position | null {
         const length = this.squadrons.length;
         if (0 < length && length < this.formation.length) {
             const leader = this.squadrons[0].character;
             if (!leader.sprite) return new Phaser.Math.Vector2(this.spawnPoint);
             const func = formationRotation[leader.dir];
             const mod = func(this.formation[index]);
-            return leader.sprite.body.position.add(mod);
+            const { x, y } = leader.sprite.body.position
+            return { x: x + mod.x, y: y + mod.y };
         }
         else if (0 === length) {
             return new Phaser.Math.Vector2(this.spawnPoint);
@@ -83,6 +83,7 @@ export class Squad {
     protected addInternal(scene: Scene, character: Character): boolean {
         const pos = this.squadronPosition(this.squadrons.length);
         if (!pos) return false;
+        console.log(`Spawning ${character.name} to ${pos.x},${pos.y}`);
 
         const sprite = character.spawn(scene, pos);
         sprite.setData('character', character);
@@ -123,7 +124,7 @@ export class LocalSquad extends Squad {
     }
 
     add(scene: Scene, character: Character, creatureController: CreatureController): boolean {
-        if (this.addInternal(scene, character)) return false;
+        if (!this.addInternal(scene, character)) return false;
         const squadron = { character, moveController: new IdleMoveController(scene, character), creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);

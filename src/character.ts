@@ -2,8 +2,8 @@ import { Preload } from './game';
 import { Scene } from 'phaser';
 import { Squad, Squadron } from './squad';
 import { DirectionEnum, DirectionType, MoveAgentEventType, MoveAgent, MoveAgentEventEnum } from './move-controller';
-import { Creature, StatType } from './creature';
-import { EventEmitter } from 'stream';
+import { characterPool, Creature, StatType } from './creature';
+import { EventEmitter } from 'events';
 
 export const ActionEnum = { ...DirectionEnum, hit: 'hit', dead: 'dead', rest: 'rest' } as const;
 export type ActionType = typeof ActionEnum[keyof typeof ActionEnum];
@@ -14,8 +14,8 @@ export const MoveActions: { [key in DirectionType]: { x: number, y: number } } =
   up: ({ x: 0, y: -1 }),
   down: ({ x: 0, y: 1 }),
 }
+export type Position = { x: number, y: number };
 
-const pool: { [key: number]: any } = {};
 const frameInfo: { [key in ActionType]: { frameRate: number, repeat: number, frame?: string } } = {
   left: { frameRate: 20, repeat: -1 },
   right: { frameRate: 20, repeat: -1 },
@@ -29,7 +29,7 @@ const frameInfo: { [key in ActionType]: { frameRate: number, repeat: number, fra
 const getFrameKey = (no: number, action: ActionType) => `${no}_${action}`;
 
 const onCreate = (scene: Scene) => {
-  Object.keys(pool).forEach(no => {
+  Object.keys(characterPool).forEach(no => {
     Object.keys(ActionEnum).forEach((actionString: string) => {
       const action: ActionType = actionString as ActionType;
       const { frameRate, repeat, frame = action } = frameInfo[action];
@@ -50,6 +50,7 @@ export class Character implements MoveAgent, Creature, Squadron {
   dirty: boolean;
   emitter: EventEmitter;
   dir: DirectionType;
+  action: ActionType;
   stats: { [key in StatType]: number };
 
   constructor(
@@ -62,16 +63,18 @@ export class Character implements MoveAgent, Creature, Squadron {
     this.dirty = false;
     this.emitter = new EventEmitter();
     this.dir = DirectionEnum.down;
+    this.action = ActionEnum.down;
     this.stats = {};
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
   // Implement Squadron
-  spawn(scene: Scene, { x, y }: Phaser.Math.Vector2): Phaser.GameObjects.Sprite {
+  spawn(scene: Scene, { x, y }: Position): Phaser.GameObjects.Sprite {
     if (this.sprite) {
       this.sprite.setPosition(x, y);
     } else {
-      this.sprite = scene.physics.add.sprite(x, y, 'down');
+      this.sprite = scene.physics.add.sprite(x, y, ActionEnum.down);
+      this.play(ActionEnum.down);
       this.sprite.body.pushable = false;
     }
     return this.sprite;
@@ -89,10 +92,16 @@ export class Character implements MoveAgent, Creature, Squadron {
 
   setNextMove(moving: boolean, dir: DirectionType = this.dir) {
     if (this.sprite) {
-      this.sprite.play(dir);
-      const x = MoveActions[dir].x * this.speed;
-      const y = MoveActions[dir].y * this.speed;
-      this.sprite.setVelocity(x, y);
+      if (dir !== this.action && Object.keys(DirectionEnum).some(x => x === this.action) ) {
+        this.play(dir);
+      }
+      if (moving) {
+        const x = MoveActions[dir].x * this.speed;
+        const y = MoveActions[dir].y * this.speed;
+        this.sprite.setVelocity(x, y);
+      } else {
+        this.sprite.setVelocity(0, 0);
+      }
     }
   }
 
