@@ -1,11 +1,9 @@
 import { Scene } from 'phaser';
 import { Character, Position } from './character';
-import { Creature, CreatureController } from './creature';
+import { characterPool, CreatureController } from './creature';
 import { KeyEnum, KeyEventEnum, keyOff, keyOn } from './local-keyboard';
-import { DirectionType, MoveAgentEventEnum, MoveController } from './move-controller';
-import { IdleMoveController } from './idle-move-controller';
-import { LocalMoveController } from './local-move-controller';
-import { isAssertionExpression } from 'typescript';
+import { DirectionType, MoveAgentEventEnum } from './move-controller';
+import { idleMoveModule, localMoveModule, MoveModule } from './move_module';
 
 export interface SpawnInfo {
     character: Character;
@@ -43,7 +41,7 @@ const formationRotation: { [key in DirectionType]: Function } = {
 
 export interface SquadronController {
     character: Character;
-    moveController: MoveController;
+    moveModule: MoveModule;
     creatureController: CreatureController;
 }
 
@@ -60,6 +58,7 @@ export class Squad {
         this.name = name;
         this.group = scene.physics.add.group();
         this.squadrons = [];
+        scene.events.on('preupdate', () => this.onPreUpdate.call(this, scene));
     }
 
     protected squadronPosition(index: number): Position | null {
@@ -92,9 +91,16 @@ export class Squad {
         return true;
     }
 
+    protected onPreUpdate(scene: Scene) {
+        this.squadrons.forEach(({ moveModule, character }) => {
+            const { moving, dir } = moveModule(scene);
+            character.setNextMove(moving, dir);
+        });
+    }
+
     add(scene: Scene, character: Character, creatureController: CreatureController): boolean {
         if (!this.addInternal(scene, character)) return false;
-        const squadron = { character, moveController: new IdleMoveController(scene, character), creatureController };
+        const squadron: SquadronController = { character, moveModule: idleMoveModule, creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);
         return true;
@@ -125,7 +131,7 @@ export class LocalSquad extends Squad {
 
     add(scene: Scene, character: Character, creatureController: CreatureController): boolean {
         if (!this.addInternal(scene, character)) return false;
-        const squadron = { character, moveController: new IdleMoveController(scene, character), creatureController };
+        const squadron:SquadronController = { character, moveModule: idleMoveModule, creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);
         if (this.squadrons.length === 1) {
@@ -157,7 +163,6 @@ export class LocalSquad extends Squad {
         scene.cameras.main.startFollow(sprite, true, 0.05, 0.05);
         keyOn(KeyEventEnum.down, KeyEnum.shift, this.shift);
         keyOn(KeyEventEnum.down, KeyEnum.unshift, this.unshift);
-        avatar.moveController = new LocalMoveController(scene, avatar.character);
         return true;
     }
 
@@ -166,10 +171,7 @@ export class LocalSquad extends Squad {
         keyOff(KeyEventEnum.down, KeyEnum.shift, this.shift);
         keyOff(KeyEventEnum.down, KeyEnum.unshift, this.unshift);
         this.local = false;
-        const avatar = this.avatar();
-        if (avatar) {
-            avatar.moveController = new IdleMoveController(scene, avatar.character);
-        }
+        this.changeAvatar(scene, null);
     }
 
     protected shift(scene: Scene) {
@@ -195,7 +197,7 @@ export class LocalSquad extends Squad {
 
         const avatar = this.avatar();
         if (avatar) {
-            avatar.moveController = new IdleMoveController(scene, avatar.character);
+            avatar.moveModule = idleMoveModule;
         }
         if (cursor === null) {
             delete this.cursor;
@@ -203,7 +205,7 @@ export class LocalSquad extends Squad {
             this.cursor = cursor;
             const avatar = this.avatar();
             if (avatar) {
-                avatar.moveController = new LocalMoveController(scene, avatar.character);
+                avatar.moveModule = localMoveModule;
             }
         }
     }

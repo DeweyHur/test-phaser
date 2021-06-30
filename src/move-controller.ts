@@ -15,7 +15,7 @@ export interface MoveAgent {
 export abstract class MoveController {
     constructor(scene: Scene, protected agent: MoveAgent) {
         scene.events.on('preupdate', (scene: Scene) => {
-            if( !agent.alive() ) return;
+            if (!agent.alive()) return;
             const { dir, moving } = this.calcNextMove(scene);
             agent.setNextMove(moving, dir);
         });
