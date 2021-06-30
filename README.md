@@ -1,14 +1,10 @@
 # Tasks
 
-1. Add character classes
-1. Attach keyboard input to the character class
-1. Attach chasing AI to the character class
+1. Formation Move Controller
+1. Aggressive Move Controller
+1. Defensive Move Controller
 1. Divide with the zones
 1. Chasing over the zones
-1. Add music
-1. Map scrolling
-1. Add stats
-1. Basic Damage equation
 1. Projectile (Arrow)
 
 

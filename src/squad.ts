@@ -131,7 +131,7 @@ export class LocalSquad extends Squad {
         if (this.squadrons.length === 1) {
             this.changeAvatar(scene, 0);
         }
-        return true;
+         return true;
     }
 
     remove(scene: Scene, character: Character): number {
@@ -147,6 +147,9 @@ export class LocalSquad extends Squad {
     }
 
     follow(scene: Scene): boolean {
+        if(this.squadrons.length === 0) return false;
+        this.local = true;
+        this.changeAvatar(scene, 0);
         const avatar = this.avatar();
         if (!avatar) return false;
         const sprite = avatar.character.sprite;
@@ -155,7 +158,6 @@ export class LocalSquad extends Squad {
         keyOn(KeyEventEnum.down, KeyEnum.shift, this.shift);
         keyOn(KeyEventEnum.down, KeyEnum.unshift, this.unshift);
         avatar.moveController = new LocalMoveController(scene, avatar.character);
-        this.local = true;
         return true;
     }
 
@@ -190,7 +192,6 @@ export class LocalSquad extends Squad {
 
     changeAvatar(scene: Scene, cursor: number | null) {
         if (!this.local) return;
-        if (this.cursor === undefined) return;
 
         const avatar = this.avatar();
         if (avatar) {

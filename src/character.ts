@@ -112,11 +112,12 @@ export class Character implements MoveAgent, Creature, Squadron {
     return this.sprite.body.position;
   }
 
-  protected play(action: string): boolean {
+  protected play(action: ActionType): boolean {
     if (!this.sprite) return false;
     const frameName = `${this.no}_${action}`;
     if (frameName === this.sprite.anims.getFrameName()) return false;
     this.sprite.anims.play(frameName);
+    this.action = action;
     return true;
   }
 
