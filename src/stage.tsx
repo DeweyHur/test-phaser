@@ -58,7 +58,7 @@ const onCreate = (scene: Scene) => {
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
         const creatureController = new CreatureController(scene, character, +no, 20);
-        Cardic.add(scene, character, creatureController);
+        Varcia.add(scene, character, creatureController);
     });
 
     scene.physics.add.collider(Cardic.group, Varcia.group, (lhs, rhs) => {
@@ -75,14 +75,16 @@ const onCreate = (scene: Scene) => {
         // console.log('wallyoursquad');
     });
 
-    scene.physics.add.overlap(Cardic.group, warpzones, (lhs, rhs) => {
-        const warp = lhs.getData('warp');
-        if (warp) {
-            rhs.body.reset(warp.x, warp.y);
-            const rhsChar: Character = rhs.getData('character');
-            console.log(`${rhsChar.name} jumps to ${warp.x}, ${warp.y}`);
-        }
-    });
+    const leader = Cardic.squadrons[0].character;
+    if (leader.sprite)
+        scene.physics.add.overlap(leader.sprite, warpzones, (lhs, rhs) => {
+            const warp = lhs.getData('warp');
+            if (warp) {
+                rhs.body.reset(warp.x, warp.y);
+                const rhsChar: Character = rhs.getData('character');
+                console.log(`${rhsChar.name} jumps to ${warp.x}, ${warp.y}`);
+            }
+        });
 }
 
 
