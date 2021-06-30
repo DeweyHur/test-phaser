@@ -55,7 +55,7 @@ export class Character implements MoveAgent, Creature, Squadron {
   constructor(
     scene: Scene,
     protected no: number,
-    protected name: string,
+    public name: string,
     protected speed: number = 120,
     protected level: number = 1
   ) {
@@ -66,12 +66,13 @@ export class Character implements MoveAgent, Creature, Squadron {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
-  // Implement MoveAgent
+  // Implement Squadron
   spawn(scene: Scene, { x, y }: Phaser.Math.Vector2): Phaser.GameObjects.Sprite {
     if (this.sprite) {
       this.sprite.setPosition(x, y);
     } else {
       this.sprite = scene.physics.add.sprite(x, y, 'down');
+      this.sprite.body.pushable = false;
     }
     return this.sprite;
   }
@@ -82,8 +83,8 @@ export class Character implements MoveAgent, Creature, Squadron {
     return !!this.sprite;
   }
 
-  on(key: MoveAgentEventType, listener: (...args: any[]) => void): EventEmitter {
-    return this.emitter.on(key, listener);
+  once(key: MoveAgentEventType, listener: (...args: any[]) => void): EventEmitter {
+    return this.emitter.once(key, listener);
   }
 
   setNextMove(moving: boolean, dir: DirectionType = this.dir) {

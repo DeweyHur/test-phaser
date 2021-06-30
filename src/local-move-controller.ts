@@ -1,7 +1,7 @@
 import { KeyEnum, keyIsDown } from './local-keyboard';
 import { DirectionEnum, DirectionType, MoveController } from './move-controller';
 
-class LocalMoveController implements MoveController {
+export class LocalMoveController extends MoveController {
     calcNextMove(scene: Phaser.Scene): { dir?: DirectionType; moving: boolean; } {
         if (keyIsDown(KeyEnum.left)) return { dir: DirectionEnum.left, moving: true };
         if (keyIsDown(KeyEnum.right)) return { dir: DirectionEnum.right, moving: true };

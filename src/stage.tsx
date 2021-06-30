@@ -1,9 +1,9 @@
 import React from 'react';
 import { Preload } from './game';
 import { Character } from './character';
-import { bindSquad } from './local-keyboard';
-import { Squad } from './squad';
+import { LocalSquad, Squad, SquadronController } from './squad';
 import { Scene } from 'phaser';
+import { CreatureController } from './creature';
 
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
@@ -13,9 +13,9 @@ const onCreate = (scene: Scene) => {
     warpzones.forEach((warpzone, index) => {
         scene.physics.add.existing(warpzone);
         const warpId = warpzone.getData('warp');
-        if ( warpId ) {
+        if (warpId) {
             const index = warpzonesLayer.objects.findIndex(x => x.id === warpId);
-            if( index !== -1 ) {
+            if (index !== -1) {
                 warpzone.setData('warp', warpzones[index]);
             }
             else {
@@ -34,45 +34,50 @@ const onCreate = (scene: Scene) => {
     // const music = scene.sound.add('bgm', { loop: true });
     // music.play();
 
-    const mySquad = new Squad(scene, 'mine');
-    mySquad.add(
-        new Character(scene, 0, '0', { x: 300, y: 300 }),
-        new Character(scene, 1, '1', { x: 350, y: 300 }),
-    );
-    bindSquad(scene, mySquad);
+    const Cardic = new LocalSquad(scene, 'Cardic', { x: 550, y: 350 });
+    [
+        [0, 'Aless'],
+        [1, 'Errane'],
+        [2, 'Alfred'],
+        ...Array.from({ length: 3 }).map((_, index) => ([85, `CGeneral${index + 1}`])),
+        ...Array.from({ length: 6 }).map((_, index) => ([84, `CSoldier${index + 1}`])),
+    ].forEach(([no, name]) => {
+        const character = new Character(scene, +no, `${name}`);
+        const creatureController = new CreatureController(scene, character, +no, 20);
+        Cardic.add(scene, character, creatureController);
+    });
+    Cardic.follow(scene);
 
-    console.log(mySquad)
-
-    const yourSquad = new Squad(scene, 'yours');
-    yourSquad.add(
-        new Character(scene, 2, '2', { x: 400, y: 300 }),
-        new Character(scene, 3, '3', { x: 450, y: 300 }),
-        new Character(scene, 4, '4', { x: 500, y: 300 }),
-        new Character(scene, 56, '56', { x: 800, y: 800 }),
-        new Character(scene, 57, '57', { x: 850, y: 800 }),
-        new Character(scene, 58, '58', { x: 900, y: 800 }),
-        new Character(scene, 59, '59', { x: 950, y: 800 }),
-        new Character(scene, 60, '60', { x: 1000, y: 800 }),
-    );
-
-    scene.physics.add.collider(mySquad.group, yourSquad.group, (lhs, rhs) => {
-        scene.physics.world.separate(lhs.body as Phaser.Physics.Arcade.Body, rhs.body as Phaser.Physics.Arcade.Body, () => { }, null, true);
-        const lhsChar: Character = lhs.getData('character');
-        const rhsChar: Character = rhs.getData('character');
-        lhsChar.hitBy(scene, rhsChar);
-        rhsChar.hitBy(scene, lhsChar);
+    const Varcia = new Squad(scene, 'Varcia', { x: 550, y: 650 });
+    [
+        [30, 'John'],
+        [31, 'Xenel'],
+        [34, 'VWarrior'],
+        ...Array.from({ length: 3 }).map((_, index) => ([33, `VKnight${index + 1}`])),
+        ...Array.from({ length: 6 }).map((_, index) => ([58, `VSoldier${index + 1}`])),
+    ].forEach(([no, name]) => {
+        const character = new Character(scene, +no, `${name}`);
+        const creatureController = new CreatureController(scene, character, +no, 20);
+        Cardic.add(scene, character, creatureController);
     });
 
-    scene.physics.add.collider(mySquad.group, tilelayer, (lhs, rhs) => {
+    scene.physics.add.collider(Cardic.group, Varcia.group, (lhs, rhs) => {
+        const { creatureController: lhsController, character: lhsChar }: SquadronController = lhs.getData('squadron');
+        const { creatureController: rhsController, character: rhsChar }: SquadronController = rhs.getData('squadron');
+        lhsController.hitBy(scene, rhsChar);
+        rhsController.hitBy(scene, lhsChar);
     });
 
-    scene.physics.add.collider(yourSquad.group, tilelayer, (lhs, rhs) => {
+    scene.physics.add.collider(Cardic.group, tilelayer, (lhs, rhs) => {
+    });
+
+    scene.physics.add.collider(Varcia.group, tilelayer, (lhs, rhs) => {
         // console.log('wallyoursquad');
     });
 
-    scene.physics.add.overlap(mySquad.group, warpzones, (lhs, rhs) => {
+    scene.physics.add.overlap(Cardic.group, warpzones, (lhs, rhs) => {
         const warp = lhs.getData('warp');
-        if( warp ) {
+        if (warp) {
             rhs.body.reset(warp.x, warp.y);
             const rhsChar: Character = rhs.getData('character');
             console.log(`${rhsChar.name} jumps to ${warp.x}, ${warp.y}`);

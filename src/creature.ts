@@ -44,22 +44,23 @@ const statMod: { [key in StatType]: StatEq } = {
     md: (base: number, lv: number) => base,
 }
 
-export abstract class CreatureController {
+export class CreatureController {
+    hp: number;
     ft: number;
     exp: number;
     hpText?: Phaser.GameObjects.Text;
 
     constructor(
         scene: Scene,
-        protected creature: Creature,
-        protected no: number,
-        protected hp: number,
-        protected lv: number,
+        public creature: Creature,
+        public no: number,
+        public lv: number,
     ) {
         this.ft = 0;
         this.exp = 0;
         const stat = getBaseStat(no);
         Object.entries(statMod).forEach(([key, eq]) => creature.setStat(key, eq(stat[key], lv)));
+        this.hp = creature.stat(StatEnum.hp);
 
         scene.events.on('postupdate', (scene: Scene) => {
             if (!creature.alive()) return;

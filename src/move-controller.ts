@@ -9,7 +9,7 @@ export type MoveAgentEventType = typeof MoveAgentEventEnum[keyof typeof MoveAgen
 export interface MoveAgent {
     alive(): boolean;
     setNextMove(moving: boolean, dir?: DirectionType): void;
-    on(key: MoveAgentEventType, listener: (...args: any[]) => void): EventEmitter;
+    once(key: MoveAgentEventType, listener: (...args: any[]) => void): EventEmitter;
 }
 
 export abstract class MoveController {

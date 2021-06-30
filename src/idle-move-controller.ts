@@ -1,6 +1,7 @@
-import { DirectionEnum, DirectionType, MoveController } from './move-controller';
+import { Scene } from 'phaser';
+import { DirectionType, MoveAgent, MoveController } from './move-controller';
 
-class IdleMoveController implements MoveController {
+export class IdleMoveController extends MoveController {
     calcNextMove(scene: Phaser.Scene): { dir?: DirectionType; moving: boolean; } {
         return { moving: false };
     }
