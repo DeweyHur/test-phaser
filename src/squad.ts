@@ -2,7 +2,7 @@ import { Scene } from 'phaser';
 import { Character, Position } from './character';
 import { CreatureController } from './creature';
 import { KeyEnum, KeyEventEnum, keyOff, keyOn } from './local-keyboard';
-import { DirectionType, idleMoveModule, localMoveModule, MoveAgentEventEnum, MoveModule } from './move-module';
+import { DirectionEnum, DirectionType, formationMoveModule, idleMoveModule, localMoveModule, MoveAgentEventEnum, MoveModule } from './move-module';
 
 export interface SpawnInfo {
     character: Character;
@@ -53,6 +53,7 @@ export class Squad {
         protected name: string,
         protected spawnPoint: Position = { x: 550, y: 350 },
         protected formation: Formation = defaultFormation,
+        protected dir: DirectionType = DirectionEnum.down,
     ) {
         this.name = name;
         this.group = scene.physics.add.group();
@@ -60,13 +61,13 @@ export class Squad {
         scene.events.on('preupdate', () => this.onPreUpdate.call(this, scene));
     }
 
-    protected squadronPosition(index: number): Position | null {
+    squadronPosition(index: number): Position | null {
         const length = this.squadrons.length;
         if (0 < length && length < this.formation.length) {
             const leader = this.squadrons[0].character;
             if (!leader.sprite) return new Phaser.Math.Vector2(this.spawnPoint);
-            const func = formationRotation[leader.dir];
-            const mod = func(this.formation[index]);
+            const func = formationRotation[this.dir];
+            const mod = this.formation[index];
             const { x, y } = leader.sprite.body.position
             return { x: x + mod.x, y: y + mod.y };
         }
@@ -91,9 +92,9 @@ export class Squad {
     }
 
     protected onPreUpdate(scene: Scene) {
-        this.squadrons.forEach(({ moveModule, character, creatureController }) => {
+        this.squadrons.forEach(({ moveModule, character, creatureController }, index) => {
             if (creatureController.hp <= 0) return;
-            const { moving, dir } = moveModule(scene);
+            const { moving, dir } = moveModule(this, index);
             character.setNextMove(moving, dir);
         });
     }
@@ -134,7 +135,7 @@ export class LocalSquad extends Squad {
 
     add(scene: Scene, character: Character, creatureController: CreatureController): boolean {
         if (!this.addInternal(scene, character)) return false;
-        const squadron: SquadronController = { character, moveModule: idleMoveModule, creatureController };
+        const squadron: SquadronController = { character, moveModule: formationMoveModule, creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);
         if (this.squadrons.length === 1) {
