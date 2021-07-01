@@ -66,12 +66,12 @@ export class Character implements MoveAgent, Creature, Squadron {
 
   ////////////////////////////////////////////////////////////////////////////////////////
   // Implement Squadron
-  spawn(scene: Scene, { x, y }: Position): Phaser.GameObjects.Sprite {
+  spawn(scene: Scene, { x, y }: Position, dir: DirectionType): Phaser.Types.Physics.Arcade.GameObjectWithDynamicBody {
     if (this.sprite) {
       this.sprite.setPosition(x, y);
     } else {
       this.sprite = scene.physics.add.sprite(x, y, ActionEnum.down);
-      this.play(ActionEnum.down);
+      this.play(dir);
       this.sprite.body.pushable = false;
     }
     return this.sprite;
@@ -89,7 +89,7 @@ export class Character implements MoveAgent, Creature, Squadron {
 
   setNextMove(moving: boolean, dir: DirectionType = this.dir) {
     if (this.sprite) {
-      if (dir !== this.dir && Object.keys(DirectionEnum).some(x => x === this.action) ) {
+      if (dir !== this.dir && Object.keys(DirectionEnum).some(x => x === this.action)) {
         this.play(dir);
         this.dir = dir;
       }

@@ -10,11 +10,11 @@ export interface SpawnInfo {
 }
 
 export interface Squadron {
-    spawn(scene: Scene, pos: Phaser.Math.Vector2): Phaser.GameObjects.Sprite;
+    spawn(scene: Scene, pos: Phaser.Math.Vector2, dir: DirectionType): Phaser.Types.Physics.Arcade.GameObjectWithDynamicBody;
 }
 
 type Formation = { x: number, y: number }[];
-const defaultFormation: Formation = [
+export const defaultFormation: Formation = [
     { x: 0, y: 0 },
     { x: -64, y: 0 },
     { x: 64, y: 0 },
@@ -67,7 +67,7 @@ export class Squad {
             const leader = this.squadrons[0].character;
             if (!leader.sprite) return new Phaser.Math.Vector2(this.spawnPoint);
             const func = formationRotation[this.dir];
-            const mod = this.formation[index];
+            const mod = func(this.formation[index]);
             const { x, y } = leader.sprite.body.position
             return { x: x + mod.x, y: y + mod.y };
         }
@@ -79,12 +79,12 @@ export class Squad {
         }
     }
 
-    protected addInternal(scene: Scene, character: Character): boolean {
+    protected addInternal(scene: Scene, character: Character, dir: DirectionType): boolean {
         const pos = this.squadronPosition(this.squadrons.length);
         if (!pos) return false;
         console.log(`Spawning ${character.name} to ${pos.x},${pos.y}`);
 
-        const sprite = character.spawn(scene, pos);
+        const sprite = character.spawn(scene, pos, dir);
         sprite.setData('character', character);
         character.once(MoveAgentEventEnum.dead, () => this.remove(scene, character));
         this.group.add(sprite);
@@ -99,8 +99,8 @@ export class Squad {
         });
     }
 
-    add(scene: Scene, character: Character, creatureController: CreatureController): boolean {
-        if (!this.addInternal(scene, character)) return false;
+    add(scene: Scene, character: Character, creatureController: CreatureController, dir: DirectionType): boolean {
+        if (!this.addInternal(scene, character, dir)) return false;
         const squadron: SquadronController = { character, moveModule: idleMoveModule, creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);
@@ -133,8 +133,8 @@ export class LocalSquad extends Squad {
         this.local = false;
     }
 
-    add(scene: Scene, character: Character, creatureController: CreatureController): boolean {
-        if (!this.addInternal(scene, character)) return false;
+    add(scene: Scene, character: Character, creatureController: CreatureController, dir: DirectionType): boolean {
+        if (!this.addInternal(scene, character, dir)) return false;
         const squadron: SquadronController = { character, moveModule: formationMoveModule, creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);
@@ -202,6 +202,10 @@ export class LocalSquad extends Squad {
         const avatar = this.avatar();
         if (avatar) {
             avatar.moveModule = idleMoveModule;
+            const sprite = avatar.character.sprite;
+            if (sprite) {
+                // sprite.body.checkCollision.none = true;
+            }
         }
         if (cursor === null) {
             delete this.cursor;
@@ -210,8 +214,11 @@ export class LocalSquad extends Squad {
             const avatar = this.avatar();
             if (avatar) {
                 avatar.moveModule = localMoveModule;
-                if (avatar.character.sprite)
-                    scene.cameras.main.startFollow(avatar.character.sprite, true, 0.05, 0.05);
+                const sprite = avatar.character.sprite;
+                if (sprite) {
+                    // sprite.body.checkCollision.none = false;
+                    scene.cameras.main.startFollow(sprite, true, 0.05, 0.05);
+                }
             }
         }
     }

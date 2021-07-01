@@ -1,9 +1,10 @@
 import React from 'react';
 import { Preload } from './game';
 import { Character } from './character';
-import { LocalSquad, Squad, SquadronController } from './squad';
+import { defaultFormation, LocalSquad, Squad, SquadronController } from './squad';
 import { Scene } from 'phaser';
 import { CreatureController } from './creature';
+import { DirectionEnum } from './move-module';
 
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
@@ -44,11 +45,11 @@ const onCreate = (scene: Scene) => {
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
         const creatureController = new CreatureController(scene, character, +no, 20);
-        Cardic.add(scene, character, creatureController);
+        Cardic.add(scene, character, creatureController, DirectionEnum.down);
     });
     Cardic.follow(scene);
 
-    const Varcia = new Squad(scene, 'Varcia', { x: 550, y: 650 });
+    const Varcia = new Squad(scene, 'Varcia', { x: 550, y: 650 }, defaultFormation, DirectionEnum.up );
     [
         [29, 'John'],
         [30, 'Xenel'],
@@ -58,7 +59,7 @@ const onCreate = (scene: Scene) => {
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
         const creatureController = new CreatureController(scene, character, +no, 20);
-        Varcia.add(scene, character, creatureController);
+        Varcia.add(scene, character, creatureController, DirectionEnum.up);
     });
 
     scene.physics.add.collider(Cardic.group, Varcia.group, (lhs, rhs) => {
@@ -67,13 +68,11 @@ const onCreate = (scene: Scene) => {
         lhsController.hitBy(scene, rhsController);
         rhsController.hitBy(scene, lhsController);
     });
-
-    scene.physics.add.collider(Cardic.group, tilelayer, (lhs, rhs) => {
+    scene.physics.add.collider(Cardic.group, Cardic.group, (lhs, rhs) => {
     });
 
-    scene.physics.add.collider(Varcia.group, tilelayer, (lhs, rhs) => {
-        // console.log('wallyoursquad');
-    });
+    scene.physics.add.collider(Cardic.group, tilelayer);
+    scene.physics.add.collider(Varcia.group, tilelayer);
 
     const leader = Cardic.squadrons[0].character;
     if (leader.sprite)

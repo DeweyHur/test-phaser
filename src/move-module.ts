@@ -1,5 +1,4 @@
 import { EventEmitter } from "stream";
-import { CreatureController } from "./creature";
 import { KeyEnum, keyIsDown } from "./local-keyboard";
 import { Squad } from "./squad";
 
