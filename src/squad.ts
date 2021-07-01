@@ -92,7 +92,7 @@ export class Squad {
 
     protected onPreUpdate(scene: Scene) {
         this.squadrons.forEach(({ moveModule, character, creatureController }) => {
-            if( creatureController.hp <= 0 ) return;
+            if (creatureController.hp <= 0) return;
             const { moving, dir } = moveModule(scene);
             character.setNextMove(moving, dir);
         });
@@ -110,7 +110,7 @@ export class Squad {
         const index = this.squadrons.findIndex(x => x.character === character);
         const { creatureController } = this.squadrons.splice(index, 1)[0];
         creatureController.off(scene);
-        
+
         if (!character.sprite) return index;
         character.sprite.destroy();
 
@@ -134,13 +134,13 @@ export class LocalSquad extends Squad {
 
     add(scene: Scene, character: Character, creatureController: CreatureController): boolean {
         if (!this.addInternal(scene, character)) return false;
-        const squadron:SquadronController = { character, moveModule: idleMoveModule, creatureController };
+        const squadron: SquadronController = { character, moveModule: idleMoveModule, creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);
         if (this.squadrons.length === 1) {
             this.changeAvatar(scene, 0);
         }
-         return true;
+        return true;
     }
 
     remove(scene: Scene, character: Character): number {
@@ -156,7 +156,7 @@ export class LocalSquad extends Squad {
     }
 
     follow(scene: Scene): boolean {
-        if(this.squadrons.length === 0) return false;
+        if (this.squadrons.length === 0) return false;
         this.local = true;
         this.changeAvatar(scene, 0);
         const avatar = this.avatar();
@@ -164,15 +164,15 @@ export class LocalSquad extends Squad {
         const sprite = avatar.character.sprite;
         if (!sprite) return false;
         scene.cameras.main.startFollow(sprite, true, 0.05, 0.05);
-        keyOn(KeyEventEnum.down, KeyEnum.shift, this.shift);
-        keyOn(KeyEventEnum.down, KeyEnum.unshift, this.unshift);
+        keyOn(KeyEventEnum.down, KeyEnum.shift, () => this.shift.call(this, scene));
+        keyOn(KeyEventEnum.down, KeyEnum.unshift, () => this.unshift.call(this, scene));
         return true;
     }
 
     unfollow(scene: Scene) {
         scene.cameras.main.stopFollow();
-        keyOff(KeyEventEnum.down, KeyEnum.shift, this.shift);
-        keyOff(KeyEventEnum.down, KeyEnum.unshift, this.unshift);
+        keyOff(KeyEventEnum.down, KeyEnum.shift, () => this.shift.call(this, scene));
+        keyOff(KeyEventEnum.down, KeyEnum.unshift, () => this.unshift.call(this, scene));
         this.local = false;
         this.changeAvatar(scene, null);
     }
@@ -209,6 +209,8 @@ export class LocalSquad extends Squad {
             const avatar = this.avatar();
             if (avatar) {
                 avatar.moveModule = localMoveModule;
+                if (avatar.character.sprite)
+                    scene.cameras.main.startFollow(avatar.character.sprite, true, 0.05, 0.05);
             }
         }
     }
