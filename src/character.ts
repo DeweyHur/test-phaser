@@ -1,9 +1,9 @@
 import { Preload } from './game';
 import { Scene } from 'phaser';
 import { Squad, Squadron } from './squad';
-import { DirectionEnum, DirectionType, MoveAgentEventType, MoveAgent, MoveAgentEventEnum } from './move-controller';
 import { characterPool, Creature, StatType } from './creature';
 import { EventEmitter } from 'events';
+import { DirectionEnum, DirectionType, MoveAgent, MoveAgentEventEnum, MoveAgentEventType } from './move-module';
 
 export const ActionEnum = { ...DirectionEnum, hit: 'hit', dead: 'dead', rest: 'rest' } as const;
 export type ActionType = typeof ActionEnum[keyof typeof ActionEnum];
@@ -50,7 +50,7 @@ export class Character implements MoveAgent, Creature, Squadron {
   dirty: boolean;
   emitter: EventEmitter;
   dir: DirectionType;
-  action: ActionType;
+  action?: ActionType;
   stats: { [key in StatType]: number };
 
   constructor(
@@ -63,7 +63,6 @@ export class Character implements MoveAgent, Creature, Squadron {
     this.dirty = false;
     this.emitter = new EventEmitter();
     this.dir = DirectionEnum.down;
-    this.action = ActionEnum.down;
     this.stats = {};
   }
 
@@ -92,8 +91,9 @@ export class Character implements MoveAgent, Creature, Squadron {
 
   setNextMove(moving: boolean, dir: DirectionType = this.dir) {
     if (this.sprite) {
-      if (dir !== this.action && Object.keys(DirectionEnum).some(x => x === this.action) ) {
+      if (dir !== this.dir && Object.keys(DirectionEnum).some(x => x === this.action) ) {
         this.play(dir);
+        this.dir = dir;
       }
       if (moving) {
         const x = MoveActions[dir].x * this.speed;
@@ -114,8 +114,8 @@ export class Character implements MoveAgent, Creature, Squadron {
 
   protected play(action: ActionType): boolean {
     if (!this.sprite) return false;
+    if (this.action === action) return false;
     const frameName = `${this.no}_${action}`;
-    if (frameName === this.sprite.anims.getFrameName()) return false;
     this.sprite.anims.play(frameName);
     this.action = action;
     return true;
@@ -144,6 +144,10 @@ export class Character implements MoveAgent, Creature, Squadron {
     if (this.play('dead')) {
       this.sprite.once('animationcomplete', () => {
         this.emitter.emit(MoveAgentEventEnum.dead);
+        if (this.sprite) {
+          this.sprite.destroy();
+          delete this.sprite;
+        }
       });
     }
   }

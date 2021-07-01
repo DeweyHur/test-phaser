@@ -1,9 +1,8 @@
 import { Scene } from 'phaser';
 import { Character, Position } from './character';
-import { characterPool, CreatureController } from './creature';
+import { CreatureController } from './creature';
 import { KeyEnum, KeyEventEnum, keyOff, keyOn } from './local-keyboard';
-import { DirectionType, MoveAgentEventEnum } from './move-controller';
-import { idleMoveModule, localMoveModule, MoveModule } from './move_module';
+import { DirectionType, idleMoveModule, localMoveModule, MoveAgentEventEnum, MoveModule } from './move-module';
 
 export interface SpawnInfo {
     character: Character;
@@ -52,7 +51,7 @@ export class Squad {
     constructor(
         scene: Scene,
         protected name: string,
-        protected spawnPoint: Phaser.Types.Math.Vector2Like = { x: 550, y: 350 },
+        protected spawnPoint: Position = { x: 550, y: 350 },
         protected formation: Formation = defaultFormation,
     ) {
         this.name = name;
@@ -92,7 +91,8 @@ export class Squad {
     }
 
     protected onPreUpdate(scene: Scene) {
-        this.squadrons.forEach(({ moveModule, character }) => {
+        this.squadrons.forEach(({ moveModule, character, creatureController }) => {
+            if( creatureController.hp <= 0 ) return;
             const { moving, dir } = moveModule(scene);
             character.setNextMove(moving, dir);
         });
@@ -108,9 +108,12 @@ export class Squad {
 
     remove(scene: Scene, character: Character): number {
         const index = this.squadrons.findIndex(x => x.character === character);
-        this.squadrons.splice(index, 1);
+        const { creatureController } = this.squadrons.splice(index, 1)[0];
+        creatureController.off(scene);
+        
         if (!character.sprite) return index;
-        character.sprite.removeFromDisplayList();
+        character.sprite.destroy();
+
         return index;
     }
 }
@@ -122,7 +125,7 @@ export class LocalSquad extends Squad {
     constructor(
         scene: Scene,
         name: string,
-        spawnPoint: Phaser.Types.Math.Vector2Like = { x: 550, y: 350 },
+        spawnPoint: Position = { x: 550, y: 350 },
         formation: Formation = defaultFormation,
     ) {
         super(scene, name, spawnPoint, formation);

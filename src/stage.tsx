@@ -62,10 +62,10 @@ const onCreate = (scene: Scene) => {
     });
 
     scene.physics.add.collider(Cardic.group, Varcia.group, (lhs, rhs) => {
-        const { creatureController: lhsController, character: lhsChar }: SquadronController = lhs.getData('squadron');
-        const { creatureController: rhsController, character: rhsChar }: SquadronController = rhs.getData('squadron');
-        lhsController.hitBy(scene, rhsChar);
-        rhsController.hitBy(scene, lhsChar);
+        const { creatureController: lhsController }: SquadronController = lhs.getData('squadron');
+        const { creatureController: rhsController }: SquadronController = rhs.getData('squadron');
+        lhsController.hitBy(scene, rhsController);
+        rhsController.hitBy(scene, lhsController);
     });
 
     scene.physics.add.collider(Cardic.group, tilelayer, (lhs, rhs) => {

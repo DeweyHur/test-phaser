@@ -1,6 +1,16 @@
 import { Scene } from "phaser";
+import { EventEmitter } from "stream";
 import { KeyEnum, keyIsDown } from "./local-keyboard";
-import { DirectionEnum, DirectionType } from "./move-controller";
+
+export const DirectionEnum = { left: 'left', right: 'right', up: 'up', down: 'down' } as const;
+export type DirectionType = typeof DirectionEnum[keyof typeof DirectionEnum];
+export const MoveAgentEventEnum = { dead: 'dead' } as const;
+export type MoveAgentEventType = typeof MoveAgentEventEnum[keyof typeof MoveAgentEventEnum];
+
+export interface MoveAgent {
+    setNextMove(moving: boolean, dir?: DirectionType): void;
+    once(key: MoveAgentEventType, listener: (...args: any[]) => void): EventEmitter;
+}
 
 export type MoveModule = (scene: Scene) => { moving: boolean, dir?: DirectionType };
 

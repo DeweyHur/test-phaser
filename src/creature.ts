@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { Preload } from './game';
 import parse from 'csv-parse';
+import { PhaserEventManager } from './phaser-event-manager';
 
 export const StatEnum = { hp: 'hp', hr: 'hr', at: 'at', ar: 'ar', df: 'df', dr: 'dr', aa: 'aa', ad: 'ad', md: 'md' }
 export type StatType = typeof StatEnum[keyof typeof StatEnum];
@@ -49,6 +50,7 @@ export class CreatureController {
     ft: number;
     exp: number;
     hpText?: Phaser.GameObjects.Text;
+    eventManager: PhaserEventManager;
 
     constructor(
         scene: Scene,
@@ -61,11 +63,18 @@ export class CreatureController {
         const stat = getBaseStat(no);
         Object.entries(statMod).forEach(([key, eq]) => creature.setStat(key, eq(stat[key], lv)));
         this.hp = creature.stat(StatEnum.hp);
+        this.eventManager = new PhaserEventManager();
+        this.eventManager.on(this, scene, 'postupdate', this.onPostUpdate);
+    }
 
-        scene.events.on('postupdate', () => {
-            if (!creature.alive()) return;
-            this.updateIndicator(scene);
-        });
+    off(scene: Scene) {
+        this.eventManager.off(scene);
+        if( this.hpText ) this.hpText.removeFromDisplayList();
+    }
+
+    onPostUpdate(scene: Scene) {
+        if (this.hp <= 0) return;
+        this.updateIndicator(scene);
     }
 
     protected updateIndicator(scene: Scene) {
@@ -84,8 +93,9 @@ export class CreatureController {
         this.hpText.setText(`${this.hp}`);
     }
 
-    hitBy(scene: Scene, opponent: Creature) {
-        if (!this.creature.alive() || !opponent.alive()) return;
+    hitBy(scene: Scene, opponentController: CreatureController) {
+        if (this.hp <= 0 || opponentController.hp <= 0) return;
+        const opponent = opponentController.creature;
         const hitChance = 0.05 + (opponent.stat('ar') - this.creature.stat('dr')) / 100 * 0.04;
         if (Math.random() < hitChance) {
             const damage = ~~(5 + (opponent.stat('at') - this.creature.stat('df')) / 100 * 4);
