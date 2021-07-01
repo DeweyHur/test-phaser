@@ -1,7 +1,7 @@
 import { Preload } from './game';
 import { Scene } from 'phaser';
 import { Squad, Squadron } from './squad';
-import { characterPool, Creature, StatType } from './creature';
+import { characterPool, Creature } from './creature';
 import { EventEmitter } from 'events';
 import { DirectionEnum, DirectionType, MoveAgent, MoveAgentEventEnum, MoveAgentEventType } from './move-module';
 
@@ -51,7 +51,6 @@ export class Character implements MoveAgent, Creature, Squadron {
   emitter: EventEmitter;
   dir: DirectionType;
   action?: ActionType;
-  stats: { [key in StatType]: number };
 
   constructor(
     scene: Scene,
@@ -63,7 +62,6 @@ export class Character implements MoveAgent, Creature, Squadron {
     this.dirty = false;
     this.emitter = new EventEmitter();
     this.dir = DirectionEnum.down;
-    this.stats = {};
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -121,15 +119,6 @@ export class Character implements MoveAgent, Creature, Squadron {
     return true;
   }
 
-  stat(key: string): number {
-    return this.stats[key];
-  }
-
-  setStat(key: string, stat: number): Creature {
-    this.stats[key] = stat;
-    return this;
-  }
-
   onHit(): void {
     if (!this.sprite) return;
     if (this.play('hit')) {
@@ -150,5 +139,9 @@ export class Character implements MoveAgent, Creature, Squadron {
         }
       });
     }
+  }
+
+  actionable(): boolean {
+    return this.action ? this.action !== ActionEnum.hit && this.action !== ActionEnum.dead : false;
   }
 };

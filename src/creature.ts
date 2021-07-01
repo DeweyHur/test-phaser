@@ -26,10 +26,9 @@ Preload.on(async (scene: Scene) => {
 export interface Creature {
     alive(): boolean;
     pos(): Phaser.Math.Vector2 | null;
-    stat(key: StatType): number;
-    setStat(key: StatType, stat: number): Creature;
     onHit(): void;
     onDead(): void;
+    actionable(): boolean;
 }
 
 type StatEq = (base: number, lv: number) => number;
@@ -49,8 +48,10 @@ export class CreatureController {
     hp: number;
     ft: number;
     exp: number;
+    stats: { [key in StatType]: number };
     hpText?: Phaser.GameObjects.Text;
     eventManager: PhaserEventManager;
+    missCount: number;
 
     constructor(
         scene: Scene,
@@ -60,16 +61,18 @@ export class CreatureController {
     ) {
         this.ft = 0;
         this.exp = 0;
+        this.stats = {};
         const stat = getBaseStat(no);
-        Object.entries(statMod).forEach(([key, eq]) => creature.setStat(key, eq(stat[key], lv)));
-        this.hp = creature.stat(StatEnum.hp);
+        Object.entries(statMod).forEach(([key, eq]) => this.stats[key] = eq(stat[key], lv));
+        this.hp = this.stats[StatEnum.hp];
+        this.missCount = 0;
         this.eventManager = new PhaserEventManager();
         this.eventManager.on(this, scene, 'postupdate', this.onPostUpdate);
     }
 
     off(scene: Scene) {
         this.eventManager.off(scene);
-        if( this.hpText ) this.hpText.removeFromDisplayList();
+        if (this.hpText) this.hpText.removeFromDisplayList();
     }
 
     onPostUpdate(scene: Scene) {
@@ -93,19 +96,38 @@ export class CreatureController {
         this.hpText.setText(`${this.hp}`);
     }
 
-    hitBy(scene: Scene, opponentController: CreatureController) {
-        if (this.hp <= 0 || opponentController.hp <= 0) return;
-        const opponent = opponentController.creature;
-        const hitChance = 0.05 + (opponent.stat('ar') - this.creature.stat('dr')) / 100 * 0.04;
+    stat(key: StatType): number {
+        switch (key) {
+            case StatEnum.at: case StatEnum.ar: case StatEnum.df: case StatEnum.dr:
+                return ~~(this.stats[key] - this.ft);
+            default:
+                return this.stats[key];
+        }
+    }
+
+    hitBy(scene: Scene, attacker: CreatureController) {
+        if (!this.creature.actionable() || !attacker.creature.actionable()) return;
+
+        const hitChance = 0.05 + (attacker.stat(StatEnum.ar) - this.stat(StatEnum.dr)) / 100 * 0.04;
+        
         if (Math.random() < hitChance) {
-            const damage = ~~(5 + (opponent.stat('at') - this.creature.stat('df')) / 100 * 4);
+            console.log(`Hit per ${this.missCount}`);
+            const at = attacker.stat(StatEnum.at);
+            const df = attacker.stat(StatEnum.df);
+            const min = Math.max(1, at - df * 2);
+            const max = Math.max(1, at - df);
+            const damage = ~~(min + Math.random() * (max - min));
             this.hp = this.hp - damage;
+            this.ft += 0.05;
             if (this.hp > 0) {
                 this.creature.onHit();
             }
             else {
                 this.creature.onDead();
             }
+        }
+        else {
+            ++this.missCount;
         }
     }
 
