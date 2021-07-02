@@ -5,6 +5,8 @@ import { defaultFormation, LocalSquad, Squad, SquadronController } from './squad
 import { Scene } from 'phaser';
 import { CreatureController } from './creature';
 import { DirectionEnum } from './move-module';
+import { Separate } from './physics';
+// import GetOverlapY from 'phaser/src/physics/arcade/GetOverlapY';
 
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
@@ -40,8 +42,8 @@ const onCreate = (scene: Scene) => {
         [0, 'Aless'],
         [1, 'Errane'],
         [2, 'Alfred'],
-        ...Array.from({ length: 3 }).map((_, index) => ([85, `CGeneral${index + 1}`])),
-        ...Array.from({ length: 6 }).map((_, index) => ([84, `CSoldier${index + 1}`])),
+        // ...Array.from({ length: 3 }).map((_, index) => ([85, `CGeneral${index + 1}`])),
+        // ...Array.from({ length: 6 }).map((_, index) => ([84, `CSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
         const creatureController = new CreatureController(scene, character, +no, 20);
@@ -49,7 +51,7 @@ const onCreate = (scene: Scene) => {
     });
     Cardic.follow(scene);
 
-    const Varcia = new Squad(scene, 'Varcia', { x: 550, y: 650 }, defaultFormation, DirectionEnum.up );
+    const Varcia = new Squad(scene, 'Varcia', { x: 550, y: 650 }, defaultFormation, DirectionEnum.up);
     [
         [29, 'John'],
         [30, 'Xenel'],
@@ -62,17 +64,30 @@ const onCreate = (scene: Scene) => {
         Varcia.add(scene, character, creatureController, DirectionEnum.up);
     });
 
-    scene.physics.add.collider(Cardic.group, Varcia.group, (lhs, rhs) => {
+    Cardic.group.children.iterate(obj => {
+        const body = obj.body as Phaser.Physics.Arcade.Body;
+    });
+
+    scene.physics.add.collider(Cardic.group, tilelayer);
+    scene.physics.add.collider(Varcia.group, tilelayer);
+    
+    scene.physics.add.overlap(Cardic.group, Varcia.group, (lhs, rhs) => {
+        const lhsBody = lhs.body as Phaser.Physics.Arcade.Body;
+        const rhsBody = rhs.body as Phaser.Physics.Arcade.Body;
+        Separate(lhsBody, rhsBody);
+
         const { creatureController: lhsController }: SquadronController = lhs.getData('squadron');
         const { creatureController: rhsController }: SquadronController = rhs.getData('squadron');
         lhsController.hitBy(scene, rhsController);
         rhsController.hitBy(scene, lhsController);
     });
+
     scene.physics.add.collider(Cardic.group, Cardic.group, (lhs, rhs) => {
+        const lhsBody = lhs.body as Phaser.Physics.Arcade.Body;
+        const rhsBody = rhs.body as Phaser.Physics.Arcade.Body;
+        Separate(lhsBody, rhsBody);
     });
 
-    scene.physics.add.collider(Cardic.group, tilelayer);
-    scene.physics.add.collider(Varcia.group, tilelayer);
 
     const leader = Cardic.squadrons[0].character;
     if (leader.sprite)

@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { Preload } from './game';
 import parse from 'csv-parse';
 import { PhaserEventManager } from './phaser-event-manager';
+import { Character } from './character';
 
 export const StatEnum = { hp: 'hp', hr: 'hr', at: 'at', ar: 'ar', df: 'df', dr: 'dr', aa: 'aa', ad: 'ad', md: 'md' }
 export type StatType = typeof StatEnum[keyof typeof StatEnum];
@@ -85,15 +86,20 @@ export class CreatureController {
         if (!pos) return;
         const { x, y } = pos;
         if (!this.hpText) {
-            this.hpText = scene.add.text(x - 8, y + 16, `${this.hp}`, {
+            this.hpText = scene.add.text(x, y + 32, `${this.hp}`, {
                 color: '#000000', fontSize: '16px', align: 'center', fontStyle: 'strong'
             });
         }
         else {
-            this.hpText.setX(x - 8);
-            this.hpText.setY(y + 16);
+            this.hpText.setX(x);
+            this.hpText.setY(y + 32);
         }
-        this.hpText.setText(`${this.hp}`);
+        const character = this.creature as Character;
+        if (character.sprite) {
+            this.hpText.setText(`${character.sprite.body.deltaX()}:${character.sprite.body.velocity.x}:${character.sprite.body.blocked.left}`);
+        } else {
+            this.hpText.setText(`${this.hp}`);            
+        }
     }
 
     stat(key: StatType): number {
@@ -109,7 +115,7 @@ export class CreatureController {
         if (!this.creature.actionable() || !attacker.creature.actionable()) return;
 
         const hitChance = 0.05 + (attacker.stat(StatEnum.ar) - this.stat(StatEnum.dr)) / 100 * 0.04;
-        
+
         if (Math.random() < hitChance) {
             console.log(`Hit per ${this.missCount}`);
             const at = attacker.stat(StatEnum.at);
