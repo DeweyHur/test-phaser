@@ -1,6 +1,7 @@
+import { Scene } from "phaser";
 import { EventEmitter } from "stream";
+import { Position } from "./character";
 import { KeyEnum, keyIsDown } from "./local-keyboard";
-import { Squad } from "./squad";
 
 export const DirectionEnum = { left: 'left', right: 'right', up: 'up', down: 'down' } as const;
 export type DirectionType = typeof DirectionEnum[keyof typeof DirectionEnum];
@@ -12,29 +13,53 @@ export interface MoveAgent {
     once(key: MoveAgentEventType, listener: (...args: any[]) => void): EventEmitter;
 }
 
-export type MoveModule = (squad: Squad, index: number) => { moving: boolean, dir?: DirectionType };
-
-export const idleMoveModule: MoveModule = () => ({ moving: false });
-export const localMoveModule: MoveModule = () => {
-    if (keyIsDown(KeyEnum.left)) return { dir: DirectionEnum.left, moving: true };
-    if (keyIsDown(KeyEnum.right)) return { dir: DirectionEnum.right, moving: true };
-    if (keyIsDown(KeyEnum.up)) return { dir: DirectionEnum.up, moving: true };
-    if (keyIsDown(KeyEnum.down)) return { dir: DirectionEnum.down, moving: true };
-    return { moving: false };
+export interface MoveModule {
+    next(): { moving: boolean, dir?: DirectionType };
+    update?(scene: Scene): void;
 }
-export const formationMoveModule: MoveModule = (squad, index) => {
-    const dest = squad.squadronPosition(index);
-    if (!dest) return { moving: false };
-    const src = squad.squadrons[index].character.pos();
-    if (!src) return { moving: false };
-    const x = dest.x - src.x, y = dest.y - src.y;
-    if ( x === 0 && y === 0 ) return { moving: false };
-    let dir;
-    if( Math.abs(x) > Math.abs(y) ) {
-        dir = x < 0 ? DirectionEnum.left : DirectionEnum.right;
-    } else {
-        dir = y < 0 ? DirectionEnum.up : DirectionEnum.down;
+
+export class IdleMoveModule implements MoveModule {
+    next() { return { moving: false }; }
+}
+
+export class LocalMoveModule implements MoveModule {
+    next() {
+        if (keyIsDown(KeyEnum.left)) return { dir: DirectionEnum.left, moving: true };
+        if (keyIsDown(KeyEnum.right)) return { dir: DirectionEnum.right, moving: true };
+        if (keyIsDown(KeyEnum.up)) return { dir: DirectionEnum.up, moving: true };
+        if (keyIsDown(KeyEnum.down)) return { dir: DirectionEnum.down, moving: true };
+        return { moving: false };
     }
-    return { moving: true, dir };
 }
 
+export class PointMoveModule implements MoveModule {
+    constructor(
+        protected src: Phaser.Physics.Arcade.Body,
+        protected dest: Position = { x: src.x, y: src.y },
+    ) { }
+
+    next() {
+        const { src, dest } = this;
+        const idle = { moving: false };
+        if (!src || !dest) return idle;
+        const dx = dest.x - src.x, dy = dest.y - src.y;
+        if (dx === 0 && dy === 0) return idle;
+
+        const checkX = () => {
+            if (dx < 0 && (!src.blocked.left && Math.abs(dx) < src.width * 2)) return { dir: DirectionEnum.left, moving: true };
+            if (dx > 0 && (!src.blocked.right && Math.abs(dx) < src.width * 2)) return { dir: DirectionEnum.right, moving: true };
+            return null;
+        };
+        const checkY = () => {
+            if (dy < 0 && (!src.blocked.up && Math.abs(dy) < src.height * 2)) return { dir: DirectionEnum.up, moving: true };
+            if (dy > 0 && (!src.blocked.down && Math.abs(dy) < src.height * 2)) return { dir: DirectionEnum.down, moving: true };
+        }
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            return checkX() || checkY() || idle;
+        } else {
+            return checkY() || checkX() || idle;
+        }
+
+    }
+}

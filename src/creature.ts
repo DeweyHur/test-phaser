@@ -96,8 +96,6 @@ export class CreatureController {
         }
         const character = this.creature as Character;
         if (character.sprite) {
-            this.hpText.setText(`${character.sprite.body.deltaX()}:${character.sprite.body.velocity.x}:${character.sprite.body.blocked.left}`);
-        } else {
             this.hpText.setText(`${this.hp}`);            
         }
     }
