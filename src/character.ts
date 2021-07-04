@@ -51,6 +51,7 @@ export class Character implements MoveAgent, Creature, Squadron {
   emitter: EventEmitter;
   dir: DirectionType;
   action?: ActionType;
+  position?: Position;
 
   constructor(
     scene: Scene,
@@ -74,6 +75,7 @@ export class Character implements MoveAgent, Creature, Squadron {
       this.play(dir);
       this.sprite.body.pushable = false;
     }
+    this.position = { x, y };
     return this.sprite;
   }
 

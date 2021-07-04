@@ -1,20 +1,26 @@
 
 export function Separate(body1: Phaser.Physics.Arcade.Body, body2: Phaser.Physics.Arcade.Body) {
-    SeparateAxis('x', [body1, body2]);
-    SeparateAxis('y', [body1, body2]);
+    const overlapX = Math.min(body1.right - body2.left, body2.right - body1.left);
+    const overlapY = Math.min(body1.bottom - body2.top, body2.bottom - body1.top);
+    if (overlapX < overlapY) SeparateAxis('x', [body1, body2], overlapX);
+    else SeparateAxis('y', [body1, body2], overlapY);
 }
 
-function SeparateAxis(axis: 'x' | 'y', bodies: Phaser.Physics.Arcade.Body[]) {
+export function Bound(min: number, value: number, max: number): number {
+    return Math.max(min, Math.min(value, max));
+}
+
+function SeparateAxis(axis: 'x' | 'y', bodies: Phaser.Physics.Arcade.Body[], overlap: number) {
     const isX = axis === 'x';
     const begin = isX ? 'left' : 'top';
     const end = isX ? 'right' : 'bottom';
     const objs = bodies.map((body, index) => {
         const other = bodies[(index + 1) % 2];
-        const v = body.velocity[axis];
+        const v = body.velocity[axis] || 0;
         return {
             body,
             v,
-            onLeft: Math.abs(body.right - other.x) <= Math.abs(other.right - body.x),
+            onBefore: Math.abs(body[end] - other[axis]) <= Math.abs(other[end] - body[axis]),
             movingLeft: v < 0,
             movingRight: v > 0,
             stationary: v === 0,
@@ -23,47 +29,43 @@ function SeparateAxis(axis: 'x' | 'y', bodies: Phaser.Physics.Arcade.Body[]) {
             process: isX ? body.processX.bind(body) : body.processY.bind(body),
         };
     });
-    const before = objs[0].onLeft ? objs[0] : objs[1];
-    const after = objs[0].onLeft ? objs[1] : objs[0];
-    const overlap = before.body[end] - after.body[begin];
+    const before = objs[0].onBefore ? objs[0] : objs[1];
+    const after = objs[0].onBefore ? objs[1] : objs[0];
     const halfOverlap = overlap * 0.5;
 
-    if (before.v > 0) {
-        if (after.endBlocked) {
-            before.process(-overlap, after.v - before.v, false, true);
-        }
-        else if (after.v === 0) {
-            before.process(-overlap, 0, false, true);
-            after.process(0, undefined, true);
-        }
-        else if (after.v < 0) {
-            before.process(-halfOverlap, 0, false, true);
-            after.process(halfOverlap, 0, true);
-        }
-        else {
-            before.process(-halfOverlap, after.v, false, true);
-            after.process(halfOverlap, undefined, true);
-        }
+    if (after.endBlocked && before.beginBlocked) {
+        console.warn(`Both end blocked. Do nothing. Overlap ${overlap} Axis ${axis}`);
+        before.process(0, 0, before.beginBlocked, true);
+        after.process(0, 0, true, after.endBlocked);
+        return false;
+    }
+    if (after.endBlocked) {
+        before.process(-overlap, 0, before.beginBlocked, true);
+        after.process(0, 0, true, after.endBlocked);
+    }
+    else if (before.beginBlocked) {
+        before.process(0, 0, before.beginBlocked, true);
+        after.process(overlap, 0, true, after.endBlocked);
+    }
+    else if (before.v > 0 && after.v < 0) {
+        before.process(-halfOverlap, 0, before.beginBlocked, true);
+        after.process(halfOverlap, 0, true, after.endBlocked);
+    }
+    else if (before.v > 0) {
+        before.process(-overlap, 0, before.beginBlocked, true);
+        after.process(0, after.v, true, after.endBlocked);
     }
     else if (after.v < 0) {
-        if (before.beginBlocked) {
-            after.process(overlap, before.v - after.v, true);
-        }
-        else if (before.v === 0) {
-            after.process(overlap, 0, true);
-            before.process(0, undefined, false, true);
-        }
-        else if (before.v > 0) {
-            after.process(halfOverlap, 0, true);
-            before.process(-halfOverlap, 0, false, true);
-        }
-        else {
-            after.process(halfOverlap, before.v, true);
-            before.process(halfOverlap, undefined, false, true);
-        }
+        before.process(0, before.v, before.beginBlocked, true);
+        after.process(overlap, 0, true, after.endBlocked);
     }
     else {
-        return false;
+        before.process(-halfOverlap, 0, before.beginBlocked, true);
+        after.process(halfOverlap, 0, true, after.endBlocked);
+    }
+    const newOverlap = before.body[end] - after.body[begin];
+    if (newOverlap > 0) {
+        console.warn(`Overlap ${overlap} -> ${newOverlap}`);
     }
     return true;
 }

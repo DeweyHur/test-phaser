@@ -4,6 +4,7 @@ import { Character, Position } from './character';
 import { CreatureController } from './creature';
 import { KeyEnum, KeyEventEnum, keyOff, keyOn } from './local-keyboard';
 import { DirectionEnum, DirectionType, MoveAgentEventEnum, IdleMoveModule, PointMoveModule, LocalMoveModule } from './move-module';
+import { Separate } from './physics';
 
 export interface SpawnInfo {
     character: Character;
@@ -95,7 +96,17 @@ export class Squad {
         this.name = name;
         this.group = scene.physics.add.group();
         this.squadrons = [];
+        this.registerInternalOverlap(scene);
+        scene.events.on('preupdate', () => this.recoverPosition.call(this, scene));
         scene.events.on('preupdate', () => this.onPreUpdate.call(this, scene));
+    }
+
+    registerInternalOverlap(scene: Scene) {
+        scene.physics.add.overlap(this.group, this.group, (lhs, rhs) => {
+            const lhsBody = lhs.body as Phaser.Physics.Arcade.Body;
+            const rhsBody = rhs.body as Phaser.Physics.Arcade.Body;
+            Separate(lhsBody, rhsBody);
+        });
     }
 
     setBattleField(field: BattleField) {
@@ -132,9 +143,30 @@ export class Squad {
 
         const sprite = character.spawn(scene, pos, dir);
         sprite.setData('character', character);
-        character.once(MoveAgentEventEnum.dead, () => this.remove(scene, character));
+        character.once(MoveAgentEventEnum.dead, () => {
+            this.remove(scene, character)
+        });
         this.group.add(sprite);
+        sprite.body.customSeparateX = true;
+        sprite.body.customSeparateY = true;
         return true;
+    }
+
+    protected recoverPosition(scene: Scene) {
+        this.squadrons.forEach(({ character }, index) => {
+            if (!character.position) return;
+            if (!character.sprite) return;
+            if (Number.isNaN(character.sprite.body.x)) {
+                character.sprite.body.x = character.position.x;
+                console.error(`Position recovered X[${index}]`);
+            }
+            if (Number.isNaN(character.sprite.body.y)) {
+                character.sprite.body.y = character.position.y;
+                console.error(`Position recovered X[${index}]`);
+            }
+            character.position.x = character.sprite.body.x;
+            character.position.y = character.sprite.body.y;
+        });
     }
 
     protected onPreUpdate(scene: Scene) {
@@ -144,15 +176,14 @@ export class Squad {
             const dest = this.squadronPosition(index);
             if (!dest) return;
 
-            let nextMove: { moving: boolean, dir?: DirectionType };
             if (moveModules.nearestEnemy) {
-                moveModules.formation.update(scene);
-                nextMove = moveModules.nearestEnemy.next();
+                moveModules.nearestEnemy.update(scene);
+                creatureController.nextMove = moveModules.nearestEnemy.next();
             } else {
                 moveModules.formation.update(scene);
-                nextMove = moveModules.formation.next();
+                creatureController.nextMove = moveModules.formation.next();
             }
-            character.setNextMove(nextMove.moving, nextMove.dir);
+            character.setNextMove(creatureController.nextMove.moving, creatureController.nextMove.dir);
         });
     }
 
@@ -273,20 +304,19 @@ export class LocalSquad extends Squad {
             const dest = this.squadronPosition(index);
             if (!dest) return;
 
-            let nextMove: { moving: boolean, dir?: DirectionType };
             const avatar = this.avatar();
             if (moveModules.local && avatar && avatar.character === character) {
-                nextMove = moveModules.local.next();
+                creatureController.nextMove = moveModules.local.next();
             }
             else if (moveModules.nearestEnemy) {
-                moveModules.formation.update(scene);
-                nextMove = moveModules.nearestEnemy.next();
+                moveModules.nearestEnemy.update(scene);
+                creatureController.nextMove = moveModules.nearestEnemy.next();
             }
             else {
                 moveModules.formation.update(scene);
-                nextMove = moveModules.formation.next();
+                creatureController.nextMove = moveModules.formation.next();
             }
-            character.setNextMove(nextMove.moving, nextMove.dir);
+            character.setNextMove(creatureController.nextMove.moving, creatureController.nextMove.dir);
         });
 
     }

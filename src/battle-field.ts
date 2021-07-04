@@ -20,9 +20,22 @@ export class NearestEnemyMoveModule extends PointMoveModule {
     }
 
     update(scene: Scene) {
-        const groups = this.field.enemies(this.squad).map(x => x.group);
-        const objects = [ ...groups.map(x => x.children.entries).flat() ];
-        this.dest = (scene.physics.closest(this.src, objects) as Phaser.Physics.Arcade.Body).position;
+        const enemies = this.field.enemies(this.squad);
+        if (!enemies) {
+            console.log('bark!');
+        }
+        const groups = enemies.map(x => x.group);
+        const objects = [...groups.map(x => x.children.entries).flat()];
+        const { min, target } = objects.reduce<{ min: number, target?: Phaser.GameObjects.GameObject }>((prev, obj) => {
+            const distance = Math.abs(obj.body.position.x - this.src.x) + Math.abs(obj.body.position.y - this.src.y);
+            if (distance < prev.min) {
+                prev.min = distance;
+                prev.target = obj;
+            }
+            return prev;
+        }, { min: Phaser.Math.MAX_SAFE_INTEGER });
+        const { x = this.src.x, y = this.src.y } = target as Phaser.Physics.Arcade.Sprite;
+        this.dest = { x, y };
     }
 }
 
@@ -34,7 +47,6 @@ export class BattleField {
         this.squads = [];
         this.map = new BattleMap(scene, mapKey);
         this.map.setActive(scene);
-
     }
 
     enemies(squad: Squad): Squad[] {
@@ -47,6 +59,7 @@ export class BattleField {
 
     addSquad(scene: Scene, squad: Squad, team: string) {
         this.map.assignGroup(scene, squad.group);
+        squad.setBattleField(this);
         this.squads
             .filter(info => team !== info.team)
             .forEach(info => {

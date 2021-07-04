@@ -46,13 +46,13 @@ export class PointMoveModule implements MoveModule {
         if (dx === 0 && dy === 0) return idle;
 
         const checkX = () => {
-            if (dx < 0 && (!src.blocked.left && Math.abs(dx) < src.width * 2)) return { dir: DirectionEnum.left, moving: true };
-            if (dx > 0 && (!src.blocked.right && Math.abs(dx) < src.width * 2)) return { dir: DirectionEnum.right, moving: true };
+            if (dx < 0 && (!src.blocked.left || Math.abs(dx) < src.width * 2)) return { dir: DirectionEnum.left, moving: true };
+            if (dx > 0 && (!src.blocked.right || Math.abs(dx) < src.width * 2)) return { dir: DirectionEnum.right, moving: true };
             return null;
         };
         const checkY = () => {
-            if (dy < 0 && (!src.blocked.up && Math.abs(dy) < src.height * 2)) return { dir: DirectionEnum.up, moving: true };
-            if (dy > 0 && (!src.blocked.down && Math.abs(dy) < src.height * 2)) return { dir: DirectionEnum.down, moving: true };
+            if (dy < 0 && (!src.blocked.up || Math.abs(dy) < src.height * 2)) return { dir: DirectionEnum.up, moving: true };
+            if (dy > 0 && (!src.blocked.down || Math.abs(dy) < src.height * 2)) return { dir: DirectionEnum.down, moving: true };
         }
 
         if (Math.abs(dx) > Math.abs(dy)) {

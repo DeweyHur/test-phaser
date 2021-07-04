@@ -22,7 +22,7 @@ const onCreate = (scene: Scene) => {
         ...Array.from({ length: 6 }).map((_, index) => ([84, `CSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
-        const creatureController = new CreatureController(scene, character, +no, 20);
+        const creatureController = new CreatureController(scene, character, +no, 1);
         Cardic.add(scene, character, creatureController, DirectionEnum.down);
     });
     Cardic.follow(scene);
@@ -37,7 +37,7 @@ const onCreate = (scene: Scene) => {
         ...Array.from({ length: 6 }).map((_, index) => ([58, `VSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
-        const creatureController = new CreatureController(scene, character, +no, 20);
+        const creatureController = new CreatureController(scene, character, +no, 99);
         Varcia.add(scene, character, creatureController, DirectionEnum.up);
     });
     field.addSquad(scene, Varcia, "Varcia");

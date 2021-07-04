@@ -3,6 +3,7 @@ import { Preload } from './game';
 import parse from 'csv-parse';
 import { PhaserEventManager } from './phaser-event-manager';
 import { Character } from './character';
+import { DirectionType } from './move-module';
 
 export const StatEnum = { hp: 'hp', hr: 'hr', at: 'at', ar: 'ar', df: 'df', dr: 'dr', aa: 'aa', ad: 'ad', md: 'md' }
 export type StatType = typeof StatEnum[keyof typeof StatEnum];
@@ -51,6 +52,7 @@ export class CreatureController {
     exp: number;
     stats: { [key in StatType]: number };
     hpText?: Phaser.GameObjects.Text;
+    nextMove: { moving: boolean, dir?: DirectionType } = { moving: false };
     eventManager: PhaserEventManager;
     missCount: number;
 
@@ -96,7 +98,8 @@ export class CreatureController {
         }
         const character = this.creature as Character;
         if (character.sprite) {
-            this.hpText.setText(`${this.hp}`);            
+            this.hpText.setText(`${this.hp}`);
+            // this.hpText.setText(`${this.nextMove.dir || 'none'}/${this.nextMove.moving}`);
         }
     }
 
@@ -115,7 +118,6 @@ export class CreatureController {
         const hitChance = 0.05 + (attacker.stat(StatEnum.ar) - this.stat(StatEnum.dr)) / 100 * 0.04;
 
         if (Math.random() < hitChance) {
-            console.log(`Hit per ${this.missCount}`);
             const at = attacker.stat(StatEnum.at);
             const df = attacker.stat(StatEnum.df);
             const min = Math.max(1, at - df * 2);
