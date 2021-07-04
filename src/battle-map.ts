@@ -9,7 +9,7 @@ export class BattleMap {
 
     constructor(scene: Scene, key: string) {
         this.map = scene.make.tilemap({ key });
-        this.tileset = this.map.addTilesetImage('istanbul', 'base_tiles');
+        this.tileset = this.map.addTilesetImage('battleTile', 'base_tiles');
         this.warpzones = this.map.createFromObjects('warpzones', { scene });
         this.warpzonesLayer = this.map.getObjectLayer('warpzones');
         this.warpzones.forEach((warpzone) => {
