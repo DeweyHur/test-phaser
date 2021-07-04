@@ -257,8 +257,6 @@ export class LocalSquad extends Squad {
             this.changeAvatar(scene, null);
         } else if (index === this.cursor) {
             this.changeAvatar(scene, (index + 1) % this.squadrons.length);
-        } else {
-            this.changeAvatar(scene, index % this.squadrons.length);
         }
         return index;
     }
