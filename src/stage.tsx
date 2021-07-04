@@ -10,7 +10,7 @@ import { Separate } from './physics';
 
 const onCreate = (scene: Scene) => {
     const map: Phaser.Tilemaps.Tilemap = scene.make.tilemap({ key: 'tilemap' });
-    const tileset: Phaser.Tilemaps.Tileset = map.addTilesetImage('istanbul', 'base_tiles');
+    const tileset: Phaser.Tilemaps.Tileset = map.addTilesetImage('battleTile', 'base_tiles');
     const warpzones: Phaser.GameObjects.GameObject[] = map.createFromObjects('warpzones', { scene });
     const warpzonesLayer: Phaser.Tilemaps.ObjectLayer = map.getObjectLayer('warpzones');
     warpzones.forEach((warpzone, index) => {
@@ -106,8 +106,8 @@ const Stage = () => {
     React.useEffect(() => {
         Preload.on((scene: Scene) => {
             scene.events.on('create', () => onCreate.call(this, scene));
-            scene.load.image('base_tiles', 'assets/image/istanbul.png');
-            scene.load.tilemapTiledJSON('tilemap', 'assets/istanbul.json');
+            scene.load.image('base_tiles', 'assets/buch-outdoor2.png');
+            scene.load.tilemapTiledJSON('tilemap', 'assets/battle.json');
             scene.load.audio('bgm', ['assets/audio/BGM14.mp3']);
         });
     }, []);
