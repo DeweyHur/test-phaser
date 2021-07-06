@@ -1,7 +1,8 @@
 
+const epsilon = 0.1;
 export function Separate(body1: Phaser.Physics.Arcade.Body, body2: Phaser.Physics.Arcade.Body) {
-    const overlapX = Math.min(body1.right - body2.left, body2.right - body1.left);
-    const overlapY = Math.min(body1.bottom - body2.top, body2.bottom - body1.top);
+    const overlapX = Math.min(body1.right - body2.left, body2.right - body1.left) - epsilon;
+    const overlapY = Math.min(body1.bottom - body2.top, body2.bottom - body1.top) - epsilon;
     if (overlapX < overlapY) SeparateAxis('x', [body1, body2], overlapX);
     else SeparateAxis('y', [body1, body2], overlapY);
 }
@@ -11,6 +12,7 @@ export function Bound(min: number, value: number, max: number): number {
 }
 
 function SeparateAxis(axis: 'x' | 'y', bodies: Phaser.Physics.Arcade.Body[], overlap: number) {
+    if (overlap < 2 * epsilon) return true;
     const isX = axis === 'x';
     const begin = isX ? 'left' : 'top';
     const end = isX ? 'right' : 'bottom';
@@ -64,7 +66,7 @@ function SeparateAxis(axis: 'x' | 'y', bodies: Phaser.Physics.Arcade.Body[], ove
         after.process(halfOverlap, 0, true, after.endBlocked);
     }
     const newOverlap = before.body[end] - after.body[begin];
-    if (newOverlap > 0) {
+    if (newOverlap > epsilon * 2) {
         console.warn(`Overlap ${overlap} -> ${newOverlap}`);
     }
     return true;

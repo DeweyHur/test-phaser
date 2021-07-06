@@ -14,7 +14,9 @@ export const MoveActions: { [key in DirectionType]: { x: number, y: number } } =
   up: ({ x: 0, y: -1 }),
   down: ({ x: 0, y: 1 }),
 }
-export type Position = { x: number, y: number };
+export const AxisEnum = { x: 'x', y: 'y' };
+export type AxisType = typeof AxisEnum[keyof typeof AxisEnum];
+export type Position = { [key in AxisType]: number };
 
 const frameInfo: { [key in ActionType]: { frameRate: number, repeat: number, frame?: string } } = {
   left: { frameRate: 20, repeat: -1 },
@@ -40,12 +42,17 @@ const onCreate = (scene: Scene) => {
   });
 }
 
+let factory: Phaser.Physics.Arcade.Factory;
+let emptySprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 Preload.on((scene: Scene) => {
   scene.events.on('create', () => onCreate.call(this, scene));
+  factory = new Phaser.Physics.Arcade.Factory(scene.physics.world);
+  emptySprite = factory.sprite(0, 0, "");
 });
 
+
 export class Character implements MoveAgent, Creature, Squadron {
-  sprite?: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   squad?: Squad;
   dirty: boolean;
   emitter: EventEmitter;
@@ -63,12 +70,13 @@ export class Character implements MoveAgent, Creature, Squadron {
     this.dirty = false;
     this.emitter = new EventEmitter();
     this.dir = DirectionEnum.down;
+    this.sprite = emptySprite;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
   // Implement Squadron
   spawn(scene: Scene, { x, y }: Position, dir: DirectionType): Phaser.Types.Physics.Arcade.GameObjectWithDynamicBody {
-    if (this.sprite) {
+    if (this.sprite !== emptySprite) {
       this.sprite.setPosition(x, y);
     } else {
       this.sprite = scene.physics.add.sprite(x, y, ActionEnum.down);
@@ -81,8 +89,8 @@ export class Character implements MoveAgent, Creature, Squadron {
 
   ////////////////////////////////////////////////////////////////////////////////////////
   // Implement MoveAgent
-  alive(): boolean {
-    return !!this.sprite;
+  exist() {
+    return this.sprite !== emptySprite;
   }
 
   once(key: MoveAgentEventType, listener: (...args: any[]) => void): EventEmitter {
@@ -90,30 +98,27 @@ export class Character implements MoveAgent, Creature, Squadron {
   }
 
   setNextMove(moving: boolean, dir: DirectionType = this.dir) {
-    if (this.sprite) {
-      if (dir !== this.dir && Object.keys(DirectionEnum).some(x => x === this.action)) {
-        this.play(dir);
-        this.dir = dir;
-      }
-      if (moving) {
-        const x = MoveActions[dir].x * this.speed;
-        const y = MoveActions[dir].y * this.speed;
-        this.sprite.setVelocity(x, y);
-      } else {
-        this.sprite.setVelocity(0, 0);
-      }
+    if (dir !== this.dir && Object.keys(DirectionEnum).some(x => x === this.action)) {
+      this.play(dir);
+      this.dir = dir;
+    }
+    if (moving) {
+      const x = MoveActions[dir].x * this.speed;
+      const y = MoveActions[dir].y * this.speed;
+      this.sprite.setVelocity(x, y);
+    } else {
+      this.sprite.setVelocity(0, 0);
     }
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
   // Implement Creature
-  pos(): Phaser.Math.Vector2 | null {
-    if (!this.sprite) return null;
+  pos(): Phaser.Math.Vector2 {
     return this.sprite.body.position;
   }
 
   protected play(action: ActionType): boolean {
-    if (!this.sprite) return false;
+    if (this.sprite === emptySprite) return false;
     if (this.action === action) return false;
     const frameName = `${this.no}_${action}`;
     this.sprite.anims.play(frameName);
@@ -122,7 +127,6 @@ export class Character implements MoveAgent, Creature, Squadron {
   }
 
   onHit(): void {
-    if (!this.sprite) return;
     if (this.play('hit')) {
       this.sprite.once('animationcomplete', () => {
         this.play('down');
@@ -131,13 +135,12 @@ export class Character implements MoveAgent, Creature, Squadron {
   }
 
   onDead(): void {
-    if (!this.sprite) return;
     if (this.play('dead')) {
       this.sprite.once('animationcomplete', () => {
         this.emitter.emit(MoveAgentEventEnum.dead);
-        if (this.sprite) {
+        if (this.sprite !== emptySprite) {
           this.sprite.destroy();
-          delete this.sprite;
+          this.sprite = emptySprite;
         }
       });
     }

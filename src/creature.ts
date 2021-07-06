@@ -26,7 +26,6 @@ Preload.on(async (scene: Scene) => {
 });
 
 export interface Creature {
-    alive(): boolean;
     pos(): Phaser.Math.Vector2 | null;
     onHit(): void;
     onDead(): void;
@@ -98,8 +97,8 @@ export class CreatureController {
         }
         const character = this.creature as Character;
         if (character.sprite) {
-            this.hpText.setText(`${this.hp}`);
-            // this.hpText.setText(`${this.nextMove.dir || 'none'}/${this.nextMove.moving}`);
+            // this.hpText.setText(`${this.hp}`);
+            this.hpText.setText(`${this.nextMove.dir || 'none'}/${this.nextMove.moving}`);
         }
     }
 

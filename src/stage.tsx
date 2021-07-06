@@ -13,7 +13,7 @@ const onCreate = (scene: Scene) => {
     // music.play();
     const field: BattleField = new BattleField(scene, 'tilemap');
 
-    const Cardic = new LocalSquad(scene, 'Cardic', { x: 550, y: 350 });
+    const Cardic = new LocalSquad(scene, 'Cardic', { x: 300, y: 300 });
     [
         [0, 'Aless'],
         [1, 'Errane'],
@@ -22,13 +22,13 @@ const onCreate = (scene: Scene) => {
         ...Array.from({ length: 6 }).map((_, index) => ([84, `CSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
-        const creatureController = new CreatureController(scene, character, +no, 1);
+        const creatureController = new CreatureController(scene, character, +no, 99);
         Cardic.add(scene, character, creatureController, DirectionEnum.down);
     });
     Cardic.follow(scene);
     field.addSquad(scene, Cardic, "Cardic");
 
-    const Varcia = new Squad(scene, 'Varcia', { x: 550, y: 650 }, defaultFormation, DirectionEnum.up);
+    const Varcia = new Squad(scene, 'Varcia', { x: 600, y: 600 }, defaultFormation, DirectionEnum.up);
     [
         [29, 'John'],
         [30, 'Xenel'],
@@ -37,7 +37,7 @@ const onCreate = (scene: Scene) => {
         ...Array.from({ length: 6 }).map((_, index) => ([58, `VSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
-        const creatureController = new CreatureController(scene, character, +no, 99);
+        const creatureController = new CreatureController(scene, character, +no, 1);
         Varcia.add(scene, character, creatureController, DirectionEnum.up);
     });
     field.addSquad(scene, Varcia, "Varcia");

@@ -1,5 +1,7 @@
-import { Scene } from "phaser";
+import { Physics, Scene } from "phaser";
 import { BattleMap } from "./battle-map";
+import { Character } from "./character";
+import { CreatureController } from "./creature";
 import { PointMoveModule } from "./move-module";
 import { Separate } from "./physics";
 import { Squad, SquadronHelper } from "./squad";
@@ -12,18 +14,16 @@ interface SquadInfo {
 export class NearestEnemyMoveModule extends PointMoveModule {
 
     constructor(
-        src: Phaser.Physics.Arcade.Body,
+        protected agent: Character,
+        protected controller: CreatureController,
         protected squad: Squad,
         protected field: BattleField,
     ) {
-        super(src);
+        super(agent.sprite.body);
     }
 
     update(scene: Scene) {
         const enemies = this.field.enemies(this.squad);
-        if (!enemies) {
-            console.log('bark!');
-        }
         const groups = enemies.map(x => x.group);
         const objects = [...groups.map(x => x.children.entries).flat()];
         const { min, target } = objects.reduce<{ min: number, target?: Phaser.GameObjects.GameObject }>((prev, obj) => {
@@ -42,11 +42,14 @@ export class NearestEnemyMoveModule extends PointMoveModule {
 export class BattleField {
     map: BattleMap;
     squads: SquadInfo[];
+    turn: number;
 
     constructor(scene: Scene, mapKey: string) {
         this.squads = [];
         this.map = new BattleMap(scene, mapKey);
         this.map.setActive(scene);
+        this.turn = 0;
+        scene.events.on('update', () => ++this.turn);
     }
 
     enemies(squad: Squad): Squad[] {
@@ -68,10 +71,11 @@ export class BattleField {
                     const rhsBody = rhs.body as Phaser.Physics.Arcade.Body;
                     Separate(lhsBody, rhsBody);
 
-                    const { creatureController: lhsController }: SquadronHelper = lhs.getData('squadron');
-                    const { creatureController: rhsController }: SquadronHelper = rhs.getData('squadron');
+                    const { character: lhschar, creatureController: lhsController }: SquadronHelper = lhs.getData('squadron');
+                    const { character: rhschar, creatureController: rhsController }: SquadronHelper = rhs.getData('squadron');
                     lhsController.hitBy(scene, rhsController);
                     rhsController.hitBy(scene, lhsController);
+                    // console.log(`Turn ${this.turn}: ${lhschar.name} <-> ${rhschar.name}`);
                 });
             });
         this.squads.push({ squad, team });
