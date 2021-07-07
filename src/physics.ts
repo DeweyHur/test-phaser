@@ -1,3 +1,22 @@
+export const DirectionEnum = { left: 'left', right: 'right', up: 'up', down: 'down' } as const;
+export type DirectionType = typeof DirectionEnum[keyof typeof DirectionEnum];
+export const AxisEnum = { x: 'x', y: 'y' };
+export type AxisType = typeof AxisEnum[keyof typeof AxisEnum];
+export const DirBegin = (axis: AxisType) => (axis === AxisEnum.x) ? DirectionEnum.left : DirectionEnum.up;
+export const DirEnd = (axis: AxisType) => (axis === AxisEnum.x) ? DirectionEnum.right : DirectionEnum.down;
+export const ConvertToAxis = (dir: DirectionType) => (dir === DirectionEnum.down || dir === DirectionEnum.up) ? AxisEnum.y : AxisEnum.x;
+export const ConvertToDir = (axis: AxisType, value: number) => {
+    if (axis === AxisEnum.x) {
+        if (value > 0) return DirectionEnum.right;
+        if (value < 0) return DirectionEnum.left;
+    }
+    else if (axis === AxisEnum.y) {
+        if (value > 0) return DirectionEnum.down;
+        if (value < 0) return DirectionEnum.up;
+    }
+    return null;
+}
+
 
 const epsilon = 0.1;
 export function Separate(body1: Phaser.Physics.Arcade.Body, body2: Phaser.Physics.Arcade.Body) {

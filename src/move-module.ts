@@ -1,13 +1,12 @@
 import { Scene } from "phaser";
 import { EventEmitter } from "stream";
-import { AxisEnum, AxisType, Position } from "./character";
+import { Position } from "./character";
 import { KeyEnum, keyIsDown } from "./local-keyboard";
+import { AxisEnum, AxisType, ConvertToAxis, ConvertToDir, DirBegin, DirectionEnum, DirectionType, DirEnd } from "./physics";
 
-export const DirectionEnum = { left: 'left', right: 'right', up: 'up', down: 'down' } as const;
-export type DirectionType = typeof DirectionEnum[keyof typeof DirectionEnum];
 export const MoveAgentEventEnum = { dead: 'dead' } as const;
 export type MoveAgentEventType = typeof MoveAgentEventEnum[keyof typeof MoveAgentEventEnum];
-const Idle = { moving: false };
+const Idle = { moving: false, dir: undefined }
 
 export interface MoveAgent {
     exist(): boolean;
@@ -16,7 +15,7 @@ export interface MoveAgent {
 }
 
 export interface MoveModule {
-    next(): { moving: boolean, dir?: DirectionType };
+    next(scene: Scene): { moving: boolean, dir?: DirectionType };
     update?(scene: Scene): void;
 }
 
@@ -37,16 +36,23 @@ export class LocalMoveModule implements MoveModule {
 export class PointMoveModule implements MoveModule {
     hex: number;
     hexAxis: AxisType;
+    detour?: { check: DirectionType, dir: DirectionType }
+    checkRect: Phaser.GameObjects.Rectangle;
+    dirRect: Phaser.GameObjects.Rectangle;
 
     constructor(
+        scene: Scene,
         protected src: Phaser.Physics.Arcade.Body,
         protected dest: Position = { x: src.x, y: src.y },
     ) {
         this.hex = -1;
         this.hexAxis = AxisEnum.x;
+        this.checkRect = scene.add.rectangle(0, 0, 0, 0, 0xff0000);
+        this.dirRect = scene.add.rectangle(0, 0, 0, 0, 0x0000ff);
     }
 
-    protected wrapMove(axis: AxisType, dir: DirectionType) {
+    protected wrapMove(axis: AxisType, dir: DirectionType | null) {
+        if (!dir) return Idle;
         this.hexAxis = axis;
         const pos = axis === AxisEnum.x ? this.src.x : this.src.y;
         this.hex = ~~(pos / 16);
@@ -54,40 +60,100 @@ export class PointMoveModule implements MoveModule {
         return { dir, moving: true };
     }
 
-    next() {
+    protected getDirRect(dir: DirectionType): number[] {
+        const src = this.src;
+        switch (dir) {
+            case DirectionEnum.left: return [src.x - 16, src.y, 16, src.height];
+            case DirectionEnum.right: return [src.x + src.width, src.y, 16, src.height];
+            case DirectionEnum.up: return [src.x, src.y - 16, src.width, 16];
+            case DirectionEnum.down: return [src.x, src.y + src.height, src.width, 16];
+        }
+    }
+
+    protected drawDirRect(rect: Phaser.GameObjects.Rectangle, dir: DirectionType, color?: number) {
+        const [x, y, width, height] = this.getDirRect(dir);
+        rect.x = x;
+        rect.y = y;
+        rect.width = width;
+        rect.height = height;
+        rect.visible = true;
+        if (color) rect.fillColor = color;
+    }
+
+    next(scene: Scene) {
         const { src, dest } = this;
         if (!src || !dest) return Idle;
-        const dx = dest.x - src.x, dy = dest.y - src.y;
-        if (dx === 0 && dy === 0) return Idle;
-
-        const vx = src.velocity.x, vy = src.velocity.y;
-        if (this.hex !== -1) {
-            if (this.hexAxis === AxisEnum.x && this.hex === ~~(src.x / 16)) {
-                // console.log(`Keep ${this.hex}/${this.hexAxis} ${src.x.toFixed(2)} ${src.y.toFixed(2)}`);
-                if (vx > 0) return this.wrapMove(this.hexAxis, DirectionEnum.right);
-                if (vx < 0) return this.wrapMove(this.hexAxis, DirectionEnum.left);
-            }
-            else if (this.hexAxis === AxisEnum.y && this.hex === ~~(src.y / 16)) {
-                // console.log(`Keep ${this.hex}/${this.hexAxis} ${src.x.toFixed(2)} ${src.y.toFixed(2)}`);
-                if (vy > 0) return this.wrapMove(this.hexAxis, DirectionEnum.down);
-                if (vy < 0) return this.wrapMove(this.hexAxis, DirectionEnum.up);
-            }
-        }
-
-        const checkX = () => {
-            if (dx < 0 && !src.blocked.left) return this.wrapMove(AxisEnum.x, DirectionEnum.left);
-            if (dx > 0 && !src.blocked.right) return this.wrapMove(AxisEnum.y, DirectionEnum.right);
-            return null;
+        const d: { [key in AxisType]: number } = { x: dest.x - src.x, y: dest.y - src.y };
+        if (d.x === 0 && d.y === 0) return Idle;
+        const v: { [key in AxisType]: number } = { x: src.velocity.x, y: src.velocity.y };
+        const hex: { [key in AxisType]: number } = { x: ~~(src.x / 16), y: ~~(src.y / 16) };
+        const blocked: { [key in DirectionType]: boolean } = {
+            left: src.blocked.left,
+            right: src.blocked.right,
+            up: src.blocked.up,
+            down: src.blocked.down,
         };
-        const checkY = () => {
-            if (dy < 0 && !src.blocked.up) return this.wrapMove(AxisEnum.x, DirectionEnum.up);
-            if (dy > 0 && !src.blocked.down) return this.wrapMove(AxisEnum.y, DirectionEnum.down);
+        if (this.hex !== -1) {
+            const axis = this.hexAxis;
+            if (this.hex === hex[axis]) {
+                // console.log(`Keep ${this.hex}/${this.hexAxis} ${src.x.toFixed(2)} ${src.y.toFixed(2)}`);
+                const move = this.wrapMove(axis, ConvertToDir(axis, v[axis]));
+                if (move !== Idle) return move;
+            }
         }
 
-        if (Math.abs(dx) > Math.abs(dy)) {
-            return checkX() || checkY() || Idle;
+        if (this.detour) {
+            const { check, dir } = this.detour;
+            const overlap = (checkDir: DirectionType) => {
+                const rect = this.getDirRect(checkDir);
+                return scene.physics.overlapRect(rect[0], rect[1], rect[2], rect[3]).length > 0;
+            }
+
+            const checkOverlap = overlap(check);
+            const dirOverlap = overlap(dir);
+            this.drawDirRect(this.checkRect, check, checkOverlap ? 0xff0000 : 0x777700);
+            this.drawDirRect(this.dirRect, dir, dirOverlap ? 0x0000ff : 0x007777);
+
+            if (checkOverlap && !dirOverlap) {
+                return this.wrapMove(ConvertToAxis(dir), dir);
+            }
+        }
+        else {
+            this.checkRect.visible = false;
+            this.dirRect.visible = false;
+        }
+
+        const checkDetour = (axis: AxisType) => {
+            const begin = DirBegin(axis), end = DirEnd(axis);
+            if (d[axis] < 0) {
+                if (blocked[begin]) return this.wrapMove(axis, begin);
+                if (blocked[end]) return this.wrapMove(axis, end);
+            } else {
+                if (blocked[end]) return this.wrapMove(axis, end);
+                if (blocked[begin]) return this.wrapMove(axis, begin);
+            }
+            return Idle;
+        }
+
+        const calcMove = (axis: AxisType) => {
+            const dir = ConvertToDir(axis, d[axis]);
+            const ortho = axis === AxisEnum.x ? AxisEnum.y : AxisEnum.x;
+            if (!dir) return null;
+            if (blocked[dir]) {
+                const detour = checkDetour(ortho);
+                if (!detour.dir) return null;
+                this.detour = { check: dir, dir: detour.dir };
+                return this.wrapMove(ortho, detour.dir);
+            }
+            else {
+                return this.wrapMove(axis, dir);
+            }
+        }
+
+        if (Math.abs(d.x) > Math.abs(d.y)) {
+            return calcMove(AxisEnum.x) || calcMove(AxisEnum.y) || Idle;
         } else {
-            return checkY() || checkX() || Idle;
+            return calcMove(AxisEnum.y) || calcMove(AxisEnum.x) || Idle;
         }
     }
 }

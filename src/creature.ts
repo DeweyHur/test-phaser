@@ -3,7 +3,7 @@ import { Preload } from './game';
 import parse from 'csv-parse';
 import { PhaserEventManager } from './phaser-event-manager';
 import { Character } from './character';
-import { DirectionType } from './move-module';
+import { DirectionType } from './physics';
 
 export const StatEnum = { hp: 'hp', hr: 'hr', at: 'at', ar: 'ar', df: 'df', dr: 'dr', aa: 'aa', ad: 'ad', md: 'md' }
 export type StatType = typeof StatEnum[keyof typeof StatEnum];

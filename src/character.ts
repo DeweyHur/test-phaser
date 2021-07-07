@@ -3,7 +3,8 @@ import { Scene } from 'phaser';
 import { Squad, Squadron } from './squad';
 import { characterPool, Creature } from './creature';
 import { EventEmitter } from 'events';
-import { DirectionEnum, DirectionType, MoveAgent, MoveAgentEventEnum, MoveAgentEventType } from './move-module';
+import { MoveAgent, MoveAgentEventEnum, MoveAgentEventType } from './move-module';
+import { AxisType, DirectionEnum, DirectionType } from './physics';
 
 export const ActionEnum = { ...DirectionEnum, hit: 'hit', dead: 'dead', rest: 'rest' } as const;
 export type ActionType = typeof ActionEnum[keyof typeof ActionEnum];
@@ -14,8 +15,6 @@ export const MoveActions: { [key in DirectionType]: { x: number, y: number } } =
   up: ({ x: 0, y: -1 }),
   down: ({ x: 0, y: 1 }),
 }
-export const AxisEnum = { x: 'x', y: 'y' };
-export type AxisType = typeof AxisEnum[keyof typeof AxisEnum];
 export type Position = { [key in AxisType]: number };
 
 const frameInfo: { [key in ActionType]: { frameRate: number, repeat: number, frame?: string } } = {

@@ -4,8 +4,7 @@ import { Character } from './character';
 import { defaultFormation, LocalSquad, Squad } from './squad';
 import { Scene } from 'phaser';
 import { CreatureController } from './creature';
-import { DirectionEnum } from './move-module';
-import { Separate } from './physics';
+import { DirectionEnum, Separate } from './physics';
 import { BattleField } from './battle-field';
 
 const onCreate = (scene: Scene) => {
