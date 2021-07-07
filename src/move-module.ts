@@ -106,16 +106,19 @@ export class PointMoveModule implements MoveModule {
             const { check, dir } = this.detour;
             const overlap = (checkDir: DirectionType) => {
                 const rect = this.getDirRect(checkDir);
-                return scene.physics.overlapRect(rect[0], rect[1], rect[2], rect[3]).length > 0;
+                const objs = scene.physics.overlapRect(rect[0], rect[1], rect[2], rect[3]) as Phaser.Physics.Arcade.Body[];
+                return objs.filter(x => x !== this.src).length > 0;
             }
 
             const checkOverlap = overlap(check);
             const dirOverlap = overlap(dir);
-            this.drawDirRect(this.checkRect, check, checkOverlap ? 0xff0000 : 0x777700);
-            this.drawDirRect(this.dirRect, dir, dirOverlap ? 0x0000ff : 0x007777);
+            // this.drawDirRect(this.checkRect, check, checkOverlap ? 0xff0000 : 0x777700);
+            // this.drawDirRect(this.dirRect, dir, dirOverlap ? 0x0000ff : 0x007777);
 
             if (checkOverlap && !dirOverlap) {
                 return this.wrapMove(ConvertToAxis(dir), dir);
+            } else {
+                delete this.detour;
             }
         }
         else {
@@ -123,14 +126,22 @@ export class PointMoveModule implements MoveModule {
             this.dirRect.visible = false;
         }
 
+
         const checkDetour = (axis: AxisType) => {
             const begin = DirBegin(axis), end = DirEnd(axis);
+            const ortho = axis === AxisEnum.x ? AxisEnum.y : AxisEnum.x;
             if (d[axis] < 0) {
-                if (blocked[begin]) return this.wrapMove(axis, begin);
-                if (blocked[end]) return this.wrapMove(axis, end);
+                if (!blocked[begin]) return this.wrapMove(axis, begin);
+                if (!blocked[end]) return this.wrapMove(axis, end);
+            } else if (d[axis] > 0) {
+                if (!blocked[end]) return this.wrapMove(axis, end);
+                if (!blocked[begin]) return this.wrapMove(axis, begin);
+            } else if (d[ortho] < 0) {
+                if (!blocked[begin]) return this.wrapMove(axis, begin);
+                if (!blocked[end]) return this.wrapMove(axis, end);
             } else {
-                if (blocked[end]) return this.wrapMove(axis, end);
-                if (blocked[begin]) return this.wrapMove(axis, begin);
+                if (!blocked[end]) return this.wrapMove(axis, end);
+                if (!blocked[begin]) return this.wrapMove(axis, begin);
             }
             return Idle;
         }

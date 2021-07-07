@@ -41,15 +41,15 @@ export class NearestEnemyMoveModule extends PointMoveModule {
         });
         if (!target) return;
         this.enemy = target as Phaser.Physics.Arcade.Sprite;
-        const { x = this.src.x, y = this.src.y } = this.enemy;
+        const { x = this.src.x, y = this.src.y } = this.enemy.body;
         this.dest = { x, y };
     }
 
     next(scene: Scene) {
-        const d: { [key in AxisType]: number } = { x: this.enemy.x - this.src.x, y: this.enemy.y - this.src.y };
+        const d: { [key in AxisType]: number } = { x: this.dest.x - this.src.x, y: this.dest.y - this.src.y };
 
         const distance = Math.max(Math.abs(d.x), Math.abs(d.y));
-        const bar = (this.src.width + this.enemy.width) / 2;
+        const bar = (this.src.width + this.enemy.body.width) / 2;
         if (distance <= bar) {
             if (Math.abs(d.x) > Math.abs(d.y)) return this.wrapMove(AxisEnum.x, ConvertToDir(AxisEnum.x, d.x));
             else return this.wrapMove(AxisEnum.y, ConvertToDir(AxisEnum.y, d.y));

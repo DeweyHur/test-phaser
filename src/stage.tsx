@@ -27,7 +27,7 @@ const onCreate = (scene: Scene) => {
     Cardic.follow(scene);
     field.addSquad(scene, Cardic, "Cardic");
 
-    const Varcia = new Squad(scene, 'Varcia', { x: 600, y: 600 }, defaultFormation, DirectionEnum.up);
+    const Varcia = new Squad(scene, 'Varcia', { x: 300, y: 600 }, defaultFormation, DirectionEnum.up);
     [
         [29, 'John'],
         [30, 'Xenel'],

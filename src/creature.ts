@@ -26,7 +26,7 @@ Preload.on(async (scene: Scene) => {
 });
 
 export interface Creature {
-    pos(): Phaser.Math.Vector2 | null;
+    pos(): Phaser.Math.Vector2;
     onHit(): void;
     onDead(): void;
     actionable(): boolean;
@@ -97,8 +97,9 @@ export class CreatureController {
         }
         const character = this.creature as Character;
         if (character.sprite) {
-            // this.hpText.setText(`${this.hp}`);
-            this.hpText.setText(`${this.nextMove.dir || 'none'}/${this.nextMove.moving}`);
+            this.hpText.setText(`${this.hp}`);
+            // this.hpText.setText(`${this.nextMove.dir || 'none'}/${this.nextMove.moving}`);
+            // this.hpText.setText(`${this.creature.pos().x}, ${this.creature.pos().y}`);
         }
     }
 
