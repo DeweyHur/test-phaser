@@ -6,7 +6,7 @@ import { AxisEnum, AxisType, ConvertToAxis, ConvertToDir, DirBegin, DirectionEnu
 
 export const MoveAgentEventEnum = { dead: 'dead' } as const;
 export type MoveAgentEventType = typeof MoveAgentEventEnum[keyof typeof MoveAgentEventEnum];
-const Idle = { moving: false, dir: undefined }
+export const Idle = { moving: false, dir: undefined };
 
 export interface MoveAgent {
     exist(): boolean;
@@ -43,7 +43,7 @@ export class PointMoveModule implements MoveModule {
     constructor(
         scene: Scene,
         protected src: Phaser.Physics.Arcade.Body,
-        protected dest: Position = { x: src.x, y: src.y },
+        protected dest?: Position,
     ) {
         this.hex = -1;
         this.hexAxis = AxisEnum.x;

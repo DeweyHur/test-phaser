@@ -1,9 +1,10 @@
 import { Scene } from 'phaser';
-import { BattleField, NearestEnemyMoveModule } from './battle-field';
+import { AvoidMoveModule, BattleField, NearestEnemyMoveModule } from './battle-field';
 import { Character, Position } from './character';
 import { CreatureController } from './creature';
 import { KeyEnum, KeyEventEnum, keyOff, keyOn } from './local-keyboard';
-import { MoveAgentEventEnum, IdleMoveModule, PointMoveModule, LocalMoveModule } from './move-module';
+import { MoveAgentEventEnum, PointMoveModule, LocalMoveModule } from './move-module';
+import { MovePicker, NeutralMovePicker } from './move-picker';
 import { DirectionEnum, DirectionType, Separate } from './physics';
 
 export interface SpawnInfo {
@@ -40,32 +41,38 @@ const formationRotation: { [key in DirectionType]: Function } = {
     right: ({ x, y }: Position) => ({ x: y, y: -x }),
 };
 
-interface MoveModules {
-    idle: IdleMoveModule;
-    formation: FormationMoveModule;
-    follow: FollowMoveModule;
-    local?: LocalMoveModule;
-    nearestEnemy?: NearestEnemyMoveModule;
-}
+// export const MoveModuleEnum = { idle: 'idle', formation: 'formation', follow: 'follow', local: 'local', nearest: 'nearest', avoid: 'avoid' };
+// export type MoveModuleType = typeof MoveModuleEnum[keyof typeof MoveModuleEnum];
+
+// interface MoveModules {
+//     idle: IdleMoveModule;
+//     formation: FormationMoveModule;
+//     follow: FollowMoveModule;
+//     local?: LocalMoveModule;
+//     nearestEnemy?: NearestEnemyMoveModule;
+//     avoid?: AvoidMoveModule;
+// }
 
 export interface SquadronHelper {
     character: Character;
-    moveModules: MoveModules;
+    movePicker: MovePicker;
     creatureController: CreatureController;
 }
 
-class FormationMoveModule extends PointMoveModule {
+export class FormationMoveModule extends PointMoveModule {
+
     constructor(
         scene: Scene,
         src: Phaser.Physics.Arcade.Body,
         public squad: Squad,
-        public index: number,
     ) {
         super(scene, src);
     }
 
     update(scene: Scene) {
-        this.dest = this.squad.squadronPosition(this.index) || { x: this.src.x, y: this.src.y };
+        const index = this.squad.squadrons.findIndex(({ character }) => character.sprite.body === this.src);
+        if (index === -1) delete this.dest;
+        else this.dest = this.squad.squadronPosition(index) || { x: this.src.x, y: this.src.y };
     }
 }
 
@@ -86,10 +93,10 @@ class FollowMoveModule extends PointMoveModule {
 export class Squad {
     group: Phaser.Physics.Arcade.Group;
     squadrons: SquadronHelper[];
-    field?: BattleField;
 
     constructor(
         scene: Scene,
+        protected field: BattleField,
         protected name: string,
         protected spawnPoint: Position = { x: 550, y: 350 },
         protected formation: Formation = defaultFormation,
@@ -111,12 +118,13 @@ export class Squad {
         });
     }
 
-    setBattleField(scene: Scene, field: BattleField) {
-        this.field = field;
-        for (const { character, creatureController, moveModules } of this.squadrons) {
-            moveModules.nearestEnemy = new NearestEnemyMoveModule(scene, character, creatureController, this, field);
-        }
-    }
+    // setBattleField(scene: Scene, field: BattleField) {
+    //     this.field = field;
+    //     for (const { character, creatureController, moveModules } of this.squadrons) {
+    //         moveModules.nearestEnemy = new NearestEnemyMoveModule(scene, character, creatureController, this, field);
+    //         moveModules.avoid = new AvoidMoveModule(scene, character, this, field);
+    //     }
+    // }
 
     squadronPosition(index: number): Position | null {
         const length = this.squadrons.length;
@@ -169,35 +177,32 @@ export class Squad {
         });
     }
 
-    protected onPreUpdate(scene: Scene) {
-        this.squadrons.forEach(({ moveModules, character, creatureController }, index) => {
+    protected pickMove(scene: Scene, squadrons: SquadronHelper[]) {
+        squadrons.forEach(({ movePicker, character, creatureController }, index) => {
             if (creatureController.hp <= 0) return;
             if (!character.sprite) return;
             const dest = this.squadronPosition(index);
             if (!dest) return;
 
-            if (moveModules.nearestEnemy) {
-                moveModules.nearestEnemy.update(scene);
-                creatureController.nextMove = moveModules.nearestEnemy.next(scene);
-            } else {
-                moveModules.formation.update(scene);
-                creatureController.nextMove = moveModules.formation.next(scene);
-            }
-            character.setNextMove(creatureController.nextMove.moving, creatureController.nextMove.dir);
+            movePicker.update(scene);
+            const { moving, dir } = movePicker.pick(scene, creatureController.hpGrade());
+            character.setNextMove(moving, dir);
         });
+    }
+
+    protected onPreUpdate(scene: Scene) {
+        this.pickMove(scene, this.squadrons);
     }
 
     add(scene: Scene, character: Character, creatureController: CreatureController, dir: DirectionType): boolean {
         if (!this.addInternal(scene, character, dir)) return false;
-        const moveModules: MoveModules = {
-            idle: new IdleMoveModule(),
-            formation: new FormationMoveModule(scene, character.sprite.body, this, this.squadrons.length),
-            follow: new FollowMoveModule(scene, character.sprite.body, character.sprite.body)
-        };
-        if (this.field) {
-            moveModules.nearestEnemy = new NearestEnemyMoveModule(scene, character, creatureController, this, this.field);
-        }
-        const squadron: SquadronHelper = { character, moveModules, creatureController };
+
+        const movePicker: MovePicker = new NeutralMovePicker(
+            new NearestEnemyMoveModule(scene, character, creatureController, this, this.field),
+            new FormationMoveModule(scene, character.sprite.body, this),
+            new AvoidMoveModule(scene, character, this, this.field)
+        )
+        const squadron: SquadronHelper = { character, movePicker, creatureController };
         this.squadrons.push(squadron);
         if (character.sprite) character.sprite.setData('squadron', squadron);
         return true;
@@ -218,35 +223,23 @@ export class Squad {
 export class LocalSquad extends Squad {
     cursor?: number;
     local: boolean;
+    localMoveModule: LocalMoveModule;
 
     constructor(
         scene: Scene,
+        field: BattleField,
         name: string,
         spawnPoint: Position = { x: 550, y: 350 },
         formation: Formation = defaultFormation,
     ) {
-        super(scene, name, spawnPoint, formation);
+        super(scene, field, name, spawnPoint, formation);
         this.local = false;
+        this.localMoveModule = new LocalMoveModule();
     }
 
     add(scene: Scene, character: Character, creatureController: CreatureController, dir: DirectionType): boolean {
-        if (!this.addInternal(scene, character, dir)) return false;
-        if (!character.sprite) return false;
-        const moveModules: MoveModules = {
-            idle: new IdleMoveModule(),
-            local: new LocalMoveModule(),
-            formation: new FormationMoveModule(scene, character.sprite.body, this, this.squadrons.length),
-            follow: new FollowMoveModule(scene, character.sprite.body, character.sprite.body),
-        };
-        if (this.field) {
-            moveModules.nearestEnemy = new NearestEnemyMoveModule(scene, character, creatureController, this, this.field);
-        }
-        const squadron: SquadronHelper = { character, moveModules, creatureController };
-        this.squadrons.push(squadron);
-        if (character.sprite) character.sprite.setData('squadron', squadron);
-        if (this.squadrons.length === 1) {
-            this.changeAvatar(scene, 0);
-        }
+        if (!super.add(scene, character, creatureController, dir)) return false;
+        if (this.squadrons.length === 1) this.changeAvatar(scene, 0);
         return true;
     }
 
@@ -295,27 +288,14 @@ export class LocalSquad extends Squad {
     }
 
     protected onPreUpdate(scene: Scene) {
-        this.squadrons.forEach(({ moveModules, character, creatureController }, index) => {
-            if (creatureController.hp <= 0) return;
-            if (!character.sprite) return;
-            const dest = this.squadronPosition(index);
-            if (!dest) return;
-
-            const avatar = this.avatar();
-            if (moveModules.local && avatar && avatar.character === character) {
-                creatureController.nextMove = moveModules.local.next();
-            }
-            else if (moveModules.nearestEnemy) {
-                moveModules.nearestEnemy.update(scene);
-                creatureController.nextMove = moveModules.nearestEnemy.next(scene);
-            }
-            else {
-                moveModules.formation.update(scene);
-                creatureController.nextMove = moveModules.formation.next(scene);
-            }
-            character.setNextMove(creatureController.nextMove.moving, creatureController.nextMove.dir);
-        });
-
+        let squadrons = this.squadrons;
+        const avatar = this.avatar();
+        if (avatar) {
+            squadrons = squadrons.filter(x => x !== avatar);
+            const { moving, dir } = this.localMoveModule.next();
+            avatar.character.setNextMove(moving, dir);
+        }
+        this.pickMove(scene, squadrons);
     }
 
     avatar(): SquadronHelper | null {

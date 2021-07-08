@@ -2,13 +2,28 @@ import { Scene } from "phaser";
 import { BattleMap } from "./battle-map";
 import { Character } from "./character";
 import { CreatureController } from "./creature";
-import { PointMoveModule } from "./move-module";
+import { Idle, PointMoveModule } from "./move-module";
 import { AxisEnum, AxisType, ConvertToDir, Separate } from "./physics";
 import { Squad, SquadronHelper } from "./squad";
 
 interface SquadInfo {
     squad: Squad;
     team: String;
+}
+
+const closestEnemy = (enemies: Squad[], src: Phaser.Physics.Arcade.Body) => {
+    const groups = enemies.map(x => x.group);
+    const objects = [...groups.map(x => x.children.entries).flat()];
+    return objects.reduce<{ min: number, target?: Phaser.GameObjects.GameObject }>((prev, obj) => {
+        const distance = Math.abs(obj.body.position.x - src.x) + Math.abs(obj.body.position.y - src.y);
+        if (distance < prev.min) {
+            prev.min = distance;
+            prev.target = obj;
+        }
+        return prev;
+    }, {
+        min: Phaser.Math.MAX_SAFE_INTEGER
+    });
 }
 
 export class NearestEnemyMoveModule extends PointMoveModule {
@@ -27,18 +42,7 @@ export class NearestEnemyMoveModule extends PointMoveModule {
 
     update(scene: Scene) {
         const enemies = this.field.enemies(this.squad);
-        const groups = enemies.map(x => x.group);
-        const objects = [...groups.map(x => x.children.entries).flat()];
-        const { min, target } = objects.reduce<{ min: number, target?: Phaser.GameObjects.GameObject }>((prev, obj) => {
-            const distance = Math.abs(obj.body.position.x - this.src.x) + Math.abs(obj.body.position.y - this.src.y);
-            if (distance < prev.min) {
-                prev.min = distance;
-                prev.target = obj;
-            }
-            return prev;
-        }, {
-            min: Phaser.Math.MAX_SAFE_INTEGER
-        });
+        const { min, target } = closestEnemy(enemies, this.src);
         if (!target) return;
         this.enemy = target as Phaser.Physics.Arcade.Sprite;
         const { x = this.src.x, y = this.src.y } = this.enemy.body;
@@ -46,6 +50,7 @@ export class NearestEnemyMoveModule extends PointMoveModule {
     }
 
     next(scene: Scene) {
+        if (!this.dest) return Idle;
         const d: { [key in AxisType]: number } = { x: this.dest.x - this.src.x, y: this.dest.y - this.src.y };
 
         const distance = Math.max(Math.abs(d.x), Math.abs(d.y));
@@ -55,6 +60,45 @@ export class NearestEnemyMoveModule extends PointMoveModule {
             else return this.wrapMove(AxisEnum.y, ConvertToDir(AxisEnum.y, d.y));
         }
         return super.next(scene);
+    }
+}
+
+export class AvoidMoveModule extends PointMoveModule {
+    enemy: Phaser.Physics.Arcade.Sprite;
+
+    constructor(
+        scene: Scene,
+        protected agent: Character,
+        protected squad: Squad,
+        protected field: BattleField,
+        protected minDistance: number = 96,
+    ) {
+        super(scene, agent.sprite.body);
+        this.enemy = agent.sprite;
+    }
+
+    update(scene: Scene) {
+        const enemies = this.field.enemies(this.squad);
+        const { min, target } = closestEnemy(enemies, this.src);
+        if (!target || min > this.minDistance) {
+            delete this.dest;
+        } else {
+            this.enemy = target as Phaser.Physics.Arcade.Sprite;
+            if (!this.enemy) {
+                delete this.dest;
+            }
+            else {
+                const { x, y } = this.enemy.body;
+                this.dest = { x, y };
+            }
+        }
+    }
+
+    next(scene: Scene) {
+        if (!this.dest) return Idle;
+        const d: { [key in AxisType]: number } = { x: this.dest.x - this.src.x, y: this.dest.y - this.src.y };
+        const axis = (Math.abs(d.x) > Math.abs(d.y)) ? AxisEnum.y : AxisEnum.x;
+        return this.wrapMove(axis, ConvertToDir(axis, -d[axis]));
     }
 }
 
@@ -81,7 +125,6 @@ export class BattleField {
 
     addSquad(scene: Scene, squad: Squad, team: string) {
         this.map.assignGroup(scene, squad.group);
-        squad.setBattleField(scene, this);
         this.squads
             .filter(info => team !== info.team)
             .forEach(info => {

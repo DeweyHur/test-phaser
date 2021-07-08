@@ -7,6 +7,8 @@ import { DirectionType } from './physics';
 
 export const StatEnum = { hp: 'hp', hr: 'hr', at: 'at', ar: 'ar', df: 'df', dr: 'dr', aa: 'aa', ad: 'ad', md: 'md' }
 export type StatType = typeof StatEnum[keyof typeof StatEnum];
+export const HpGradeEnum = { good: 'good', tired: 'tired', danger: 'danger', dead: 'dead' };
+export type HpGradeType = typeof HpGradeEnum[keyof typeof HpGradeEnum];
 
 export const characterPool: { [key: number]: any } = {};
 export const getBaseStat = (no: number) => characterPool[no];
@@ -77,6 +79,14 @@ export class CreatureController {
         if (this.hpText) this.hpText.removeFromDisplayList();
     }
 
+    hpGrade(): HpGradeType {
+        const ratio = this.hp / this.stat('hp');
+        if (ratio > 0.4) return HpGradeEnum.good;
+        else if (ratio > 0.15) return HpGradeEnum.tired;
+        else if (ratio > 0) return HpGradeEnum.danger;
+        else return HpGradeEnum.dead;
+    }
+
     onPostUpdate(scene: Scene) {
         if (this.hp <= 0) return;
         this.updateIndicator(scene);
@@ -119,9 +129,11 @@ export class CreatureController {
 
         if (Math.random() < hitChance) {
             const at = attacker.stat(StatEnum.at);
-            const df = attacker.stat(StatEnum.df);
-            const min = Math.max(1, at - df * 2);
-            const max = Math.max(1, at - df);
+            const df = this.stat(StatEnum.df);
+            // const min = Math.max(1, at - df * 2);
+            // const max = Math.max(1, at - df);
+            const min = at * (1 - df * 0.01);
+            const max = min * 2;
             const damage = ~~(min + Math.random() * (max - min));
             this.hp = this.hp - damage;
             this.ft += 0.05;
