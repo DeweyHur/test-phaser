@@ -81,6 +81,8 @@ export class Character implements MoveAgent, Creature, Squadron {
       this.sprite = scene.physics.add.sprite(x, y, ActionEnum.down);
       this.play(dir);
       this.sprite.body.pushable = false;
+      
+      this.sprite.setCollideWorldBounds();
     }
     this.position = { x, y };
     return this.sprite;

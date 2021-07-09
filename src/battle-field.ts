@@ -45,6 +45,7 @@ export class NearestEnemyMoveModule extends PointMoveModule {
         const { min, target } = closestEnemy(enemies, this.src);
         if (!target) return;
         this.enemy = target as Phaser.Physics.Arcade.Sprite;
+        if (!this.enemy || !this.enemy.body) return Idle;
         const { x = this.src.x, y = this.src.y } = this.enemy.body;
         this.dest = { x, y };
     }
@@ -97,7 +98,7 @@ export class AvoidMoveModule extends PointMoveModule {
     next(scene: Scene) {
         if (!this.dest) return Idle;
         const d: { [key in AxisType]: number } = { x: this.dest.x - this.src.x, y: this.dest.y - this.src.y };
-        const axis = (Math.abs(d.x) > Math.abs(d.y)) ? AxisEnum.y : AxisEnum.x;
+        const axis = (Math.abs(d.x) > Math.abs(d.y)) ? AxisEnum.x : AxisEnum.y;
         return this.wrapMove(axis, ConvertToDir(axis, -d[axis]));
     }
 }

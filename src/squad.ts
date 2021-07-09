@@ -103,7 +103,9 @@ export class Squad {
         protected dir: DirectionType = DirectionEnum.down,
     ) {
         this.name = name;
-        this.group = scene.physics.add.group();
+        this.group = scene.physics.add.group({
+            collideWorldBounds: true
+        });
         this.squadrons = [];
         this.registerInternalOverlap(scene);
         scene.events.on('preupdate', () => this.recoverPosition.call(this, scene));

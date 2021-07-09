@@ -15,10 +15,10 @@ const onCreate = (scene: Scene) => {
     const Cardic = new LocalSquad(scene, field, 'Cardic', { x: 300, y: 300 });
     [
         [0, 'Aless'],
-        // [1, 'Errane'],
-        // [2, 'Alfred'],
-        // ...Array.from({ length: 3 }).map((_, index) => ([85, `CGeneral${index + 1}`])),
-        // ...Array.from({ length: 6 }).map((_, index) => ([84, `CSoldier${index + 1}`])),
+        [1, 'Errane'],
+        [2, 'Alfred'],
+        ...Array.from({ length: 3 }).map((_, index) => ([85, `CGeneral${index + 1}`])),
+        ...Array.from({ length: 6 }).map((_, index) => ([84, `CSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
         const creatureController = new CreatureController(scene, character, +no, 99);
@@ -30,10 +30,10 @@ const onCreate = (scene: Scene) => {
     const Varcia = new Squad(scene, field, 'Varcia', { x: 300, y: 600 }, defaultFormation, DirectionEnum.up);
     [
         [29, 'John'],
-        // [30, 'Xenel'],
-        // [49, 'VWarrior'],
-        // ...Array.from({ length: 3 }).map((_, index) => ([50, `VKnight${index + 1}`])),
-        // ...Array.from({ length: 6 }).map((_, index) => ([58, `VSoldier${index + 1}`])),
+        [30, 'Xenel'],
+        [49, 'VWarrior'],
+        ...Array.from({ length: 3 }).map((_, index) => ([50, `VKnight${index + 1}`])),
+        ...Array.from({ length: 6 }).map((_, index) => ([58, `VSoldier${index + 1}`])),
     ].forEach(([no, name]) => {
         const character = new Character(scene, +no, `${name}`);
         const creatureController = new CreatureController(scene, character, +no, 1);
